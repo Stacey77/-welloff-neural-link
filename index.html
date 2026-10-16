@@ -1,0 +1,482 @@
+<title>WellOff Neural Link</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+  /* ── tokens ──────────────────────────────────────────────────── */
+  :root {
+    --bg:        #050810;
+    --bg2:       #0b0f1c;
+    --bg3:       #111827;
+    --border:    rgba(255,255,255,.08);
+    --fg:        #e2e8f0;
+    --fg2:       #94a3b8;
+    --fg3:       #475569;
+    --c-ton:     #00d4ff;
+    --c-aria:    #a855f7;
+    --c-devx:    #f59e0b;
+    --c-terra:   #10b981;
+    --c-capita:  #ef4444;
+    --c-nova:    #3b82f6;
+    --glow-ton:  rgba(0,212,255,.18);
+    --glow-aria: rgba(168,85,247,.18);
+    --radius:    14px;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    min-height: 100%;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 0;
+    overflow-x: hidden;
+  }
+
+  /* ── neural canvas bg ─────────────────────────────────────────── */
+  #neural-canvas {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    opacity: .45;
+  }
+
+  /* ── layout ───────────────────────────────────────────────────── */
+  .page { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding-block: 48px 80px; }
+
+  /* ── header ───────────────────────────────────────────────────── */
+  .header { text-align: center; margin-bottom: 56px; }
+  .logo-row { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 16px; }
+  .logo-hex {
+    width: 52px; height: 52px;
+    background: conic-gradient(from 180deg, var(--c-ton), var(--c-aria), var(--c-devx), var(--c-terra), var(--c-nova), var(--c-ton));
+    clip-path: polygon(50% 0%,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%);
+    filter: drop-shadow(0 0 16px var(--c-ton));
+    animation: spin 12s linear infinite;
+  }
+  @keyframes spin { to { filter: drop-shadow(0 0 16px var(--c-aria)) hue-rotate(360deg); } }
+
+  h1 {
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 700;
+    letter-spacing: -.5px;
+    background: linear-gradient(135deg, #fff 30%, var(--c-ton));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .tagline { color: var(--fg2); font-size: 15px; margin-top: 8px; font-family: 'JetBrains Mono', monospace; }
+
+  .status-pill {
+    display: inline-flex; align-items: center; gap: 7px;
+    border: 1px solid rgba(16,185,129,.3); background: rgba(16,185,129,.08);
+    color: #34d399; font-size: 12px; font-family: 'JetBrains Mono', monospace;
+    padding: 5px 14px; border-radius: 100px; margin-top: 20px;
+  }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #10b981; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.4)} }
+
+  /* ── section label ────────────────────────────────────────────── */
+  .section-label {
+    font-size: 11px; font-family: 'JetBrains Mono', monospace;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--fg3);
+    margin-bottom: 20px;
+  }
+
+  /* ── TON command ──────────────────────────────────────────────── */
+  .ton-box {
+    border: 1px solid rgba(0,212,255,.25);
+    background: linear-gradient(135deg, rgba(0,212,255,.05), rgba(0,212,255,.02));
+    border-radius: var(--radius); padding: 20px 24px; margin-bottom: 48px;
+    box-shadow: 0 0 40px rgba(0,212,255,.06);
+  }
+  .ton-label { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .ton-label .agent-id { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--c-ton); font-weight: 500; letter-spacing: .1em; }
+  .ton-label .agent-role { font-size: 12px; color: var(--fg3); }
+  .ton-input-row { display: flex; gap: 10px; }
+  .ton-input {
+    flex: 1; background: rgba(0,0,0,.4); border: 1px solid rgba(0,212,255,.2);
+    border-radius: 10px; padding: 12px 16px; color: var(--fg);
+    font-family: 'JetBrains Mono', monospace; font-size: 13px; outline: none;
+    transition: border-color .2s;
+  }
+  .ton-input:focus { border-color: rgba(0,212,255,.5); box-shadow: 0 0 0 3px rgba(0,212,255,.08); }
+  .ton-input::placeholder { color: var(--fg3); }
+  .ton-btn {
+    background: linear-gradient(135deg, rgba(0,212,255,.2), rgba(0,212,255,.1));
+    border: 1px solid rgba(0,212,255,.35); color: var(--c-ton);
+    border-radius: 10px; padding: 12px 22px; font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; font-weight: 500; letter-spacing: .05em; cursor: pointer;
+    transition: all .2s; white-space: nowrap;
+  }
+  .ton-btn:hover { background: rgba(0,212,255,.25); box-shadow: 0 0 20px rgba(0,212,255,.15); }
+  .ton-output {
+    margin-top: 14px; padding: 12px 14px;
+    background: rgba(0,0,0,.3); border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--c-ton);
+    min-height: 38px; word-break: break-word; display: none;
+    border: 1px solid rgba(0,212,255,.1);
+  }
+
+  /* ── agent grid ───────────────────────────────────────────────── */
+  .agents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 48px;
+  }
+
+  .agent-card {
+    border-radius: var(--radius); padding: 20px;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    transition: transform .2s, box-shadow .2s;
+    position: relative; overflow: hidden;
+  }
+  .agent-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(circle at 0 0, var(--agent-glow, transparent) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .agent-card:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,.4); }
+
+  .agent-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .agent-avatar {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500;
+    color: #fff; flex-shrink: 0;
+  }
+  .agent-name { font-weight: 600; font-size: 14px; }
+  .agent-role-tag { font-size: 11px; color: var(--fg2); margin-top: 1px; }
+
+  .live-badge {
+    margin-left: auto; display: flex; align-items: center; gap: 5px;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    padding: 3px 9px; border-radius: 100px;
+  }
+  .live-badge.active { background: rgba(16,185,129,.12); color: #34d399; border: 1px solid rgba(16,185,129,.2); }
+  .live-badge.thinking { background: rgba(245,158,11,.12); color: #fbbf24; border: 1px solid rgba(245,158,11,.2); }
+
+  .task-strip {
+    background: rgba(0,0,0,.25); border-radius: 8px; padding: 10px 12px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--fg2);
+    border-left: 2px solid var(--agent-color, var(--border));
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .agent-tools { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 12px; }
+  .tool-chip {
+    font-size: 10px; font-family: 'JetBrains Mono', monospace;
+    padding: 3px 8px; border-radius: 6px;
+    background: rgba(255,255,255,.05); color: var(--fg3);
+    border: 1px solid rgba(255,255,255,.06);
+  }
+
+  /* ── mcp servers ──────────────────────────────────────────────── */
+  .mcp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 48px; }
+  .mcp-card {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 16px; display: flex; align-items: center; gap: 12px;
+  }
+  .mcp-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .mcp-dot.connected { background: #10b981; box-shadow: 0 0 8px #10b981; animation: pulse 3s infinite; }
+  .mcp-dot.via { background: var(--c-ton); box-shadow: 0 0 8px var(--c-ton); }
+  .mcp-name { font-size: 12px; font-weight: 500; }
+  .mcp-meta { font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--fg3); margin-top: 2px; }
+
+  /* ── activity feed ────────────────────────────────────────────── */
+  .feed { display: flex; flex-direction: column; gap: 8px; }
+  .feed-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 14px; animation: fadeIn .4s ease;
+  }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(6px) } }
+  .feed-time { font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--fg3); flex-shrink: 0; margin-top: 1px; }
+  .feed-agent { font-size: 11px; font-family: 'JetBrains Mono', monospace; font-weight: 500; flex-shrink: 0; }
+  .feed-msg { font-size: 12px; color: var(--fg2); flex: 1; min-width: 0; }
+
+  /* ── endpoints ────────────────────────────────────────────────── */
+  .endpoints { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 48px; }
+  .ep {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 9px 14px;
+  }
+  .ep-method { font-size: 10px; font-family: 'JetBrains Mono', monospace; font-weight: 500; padding: 2px 7px; border-radius: 4px; }
+  .ep-method.get { background: rgba(16,185,129,.15); color: #34d399; }
+  .ep-method.post { background: rgba(59,130,246,.15); color: #60a5fa; }
+  .ep-method.ws { background: rgba(245,158,11,.15); color: #fbbf24; }
+  .ep-path { font-size: 12px; font-family: 'JetBrains Mono', monospace; color: var(--fg2); }
+
+  @media (max-width: 480px) {
+    .ton-input-row { flex-direction: column; }
+    .agents-grid { grid-template-columns: 1fr; }
+  }
+</style>
+
+<canvas id="neural-canvas"></canvas>
+
+<div class="page">
+
+  <!-- header -->
+  <header class="header">
+    <div class="logo-row">
+      <div class="logo-hex"></div>
+      <h1>WellOff Neural Link</h1>
+    </div>
+    <p class="tagline">// agent orchestration layer — MCP gateway</p>
+    <div class="status-pill">
+      <span class="status-dot"></span>
+      <span id="health-label">checking status…</span>
+    </div>
+  </header>
+
+  <!-- TON command -->
+  <div class="section-label">// TON — Total Operations Navigator</div>
+  <div class="ton-box">
+    <div class="ton-label">
+      <span class="agent-id">TON</span>
+      <span class="agent-role">Natural language → agent dispatch via MCP tool-use loop</span>
+    </div>
+    <div class="ton-input-row">
+      <input class="ton-input" id="ton-input" placeholder="e.g. find motivated sellers in LA and launch a Meta Ads campaign…" />
+      <button class="ton-btn" id="ton-send">▶ Dispatch</button>
+    </div>
+    <div class="ton-output" id="ton-output"></div>
+  </div>
+
+  <!-- agents -->
+  <div class="section-label">// agent network — 6 active</div>
+  <div class="agents-grid" id="agents-grid"></div>
+
+  <!-- MCP servers -->
+  <div class="section-label">// MCP server connections</div>
+  <div class="mcp-grid" id="mcp-grid"></div>
+
+  <!-- endpoints -->
+  <div class="section-label">// neural-link endpoints</div>
+  <div class="endpoints">
+    <div class="ep"><span class="ep-method get">GET</span><span class="ep-path">/health</span></div>
+    <div class="ep"><span class="ep-method post">POST</span><span class="ep-path">/dispatch</span></div>
+    <div class="ep"><span class="ep-method post">POST</span><span class="ep-path">/ton</span></div>
+    <div class="ep"><span class="ep-method get">GET</span><span class="ep-path">/memory</span></div>
+    <div class="ep"><span class="ep-method get">GET</span><span class="ep-path">/mcp/tools</span></div>
+    <div class="ep"><span class="ep-method post">POST</span><span class="ep-path">/mcp/call</span></div>
+    <div class="ep"><span class="ep-method ws">WS</span><span class="ep-path">ws://localhost:3001</span></div>
+  </div>
+
+  <!-- activity feed -->
+  <div class="section-label">// live activity</div>
+  <div class="feed" id="feed"></div>
+
+</div>
+
+<script>
+const AGENTS = [
+  { id:'ARIA',   color:'#a855f7', role:'Real Estate Agent AI',     status:'active',   tools:['list_meta_campaigns','create_meta_campaign','kill_meta_campaigns','search_leads','enrich_lead'],          tasks:['Scanning FSBO listings in 90028…','Enriching lead: Marcus Thompson','Drafting follow-up SMS for 3 hot leads','Launching Meta Ads campaign for LA sellers','Syncing 5 Facebook lead form submissions'] },
+  { id:'DEVX',   color:'#f59e0b', role:'Real Estate Developer AI', status:'active',   tools:['list_google_campaigns','create_google_campaign','get_keyword_ideas','scan_zoning_changes'],               tasks:['Monitoring permit filings in Dallas County…','Running keyword research: "sell my house fast"','Creating Google Search campaign for Dallas leads','Analyzing zoning change in Austin corridor'] },
+  { id:'TERRA',  color:'#10b981', role:'Land Developer AI',        status:'thinking', tools:['get_property_details','search_properties','calculate_movement_score','get_tax_records'],                   tasks:['Evaluating entitlement risk on 3 parcels…','Scanning GIS data for utility access points','Analyzing flood zone maps for Atlanta parcel','Pulling movement scores for watchlist'] },
+  { id:'CAPITA', color:'#ef4444', role:'Commercial Investor AI',   status:'active',   tools:['get_comparable_sales','search_properties','generate_document'],                                            tasks:['Screening 12 NNN lease opportunities…','Calculating NOI on Houston industrial portfolio','Generating LOI for Chicago property','Modeling cash-on-cash return for Dallas strip mall'] },
+  { id:'NOVA',   color:'#3b82f6', role:'Non-Commercial Investor AI',status:'active',  tools:['search_properties','search_leads','generate_social_content','generate_virtual_staging'],                  tasks:['Running rental income analysis on 5 targets…','Screening foreclosure auction lists','Setting up Instagram carousel ad for listing','Generating virtual staging: modern style'] },
+  { id:'TON',    color:'#00d4ff', role:'Total Operations Navigator',status:'active',  tools:['ton_dispatch','all MCP tools via tool-use loop'],                                                          tasks:['Orchestrating 5 agents across 3 campaigns…','Routing Meta Ads lead to ARIA for follow-up','Pulling Google Ads conversion report','Dispatching bulk SMS sequence to 47 contacts'] },
+];
+
+const MCP_SERVERS = [
+  { name:'welloff-meta-ads',    tools:8,  agent:'ARIA',   color:'#0866ff', via:'WellOff /api/mcp' },
+  { name:'welloff-google-ads',  tools:5,  agent:'DEVX',   color:'#4285f4', via:'WellOff /api/mcp' },
+  { name:'welloff-leads',       tools:5,  agent:'ARIA',   color:'#8b5cf6', via:'WellOff /api/mcp' },
+  { name:'welloff-property',    tools:5,  agent:'TERRA',  color:'#10b981', via:'WellOff /api/mcp' },
+  { name:'welloff-comms',       tools:4,  agent:'TON',    color:'#00d4ff', via:'WellOff /api/mcp' },
+  { name:'welloff-territory',   tools:4,  agent:'DEVX',   color:'#f59e0b', via:'WellOff /api/mcp' },
+  { name:'welloff-media',       tools:4,  agent:'NOVA',   color:'#ef4444', via:'WellOff /api/mcp' },
+  { name:'welloff-kimi',        tools:2,  agent:'ARIA',   color:'#06b6d4', via:'WellOff /api/mcp' },
+];
+
+const ACTIVITY_TEMPLATES = [
+  (a,c) => `<span style="color:${c}">${a}</span> scanned FSBO listings in 90028 — 8 leads found`,
+  (a,c) => `<span style="color:${c}">${a}</span> enriched lead Marcus Thompson (7 fields added)`,
+  (a,c) => `<span style="color:${c}">${a}</span> launched Meta Ads campaign for LA motivated sellers`,
+  (a,c) => `<span style="color:${c}">${a}</span> dispatched bulk SMS sequence to 47 contacts`,
+  (a,c) => `<span style="color:${c}">${a}</span> pulled Google Ads keyword report: 1.9K/mo in 75201`,
+  (a,c) => `<span style="color:${c}">${a}</span> generated LOI document for Chicago property`,
+  (a,c) => `<span style="color:${c}">${a}</span> calculated movement score 92 for prop-7 (HIGHLY MOTIVATED)`,
+  (a,c) => `<span style="color:${c}">${a}</span> created Google Search campaign targeting Dallas sellers`,
+  (a,c) => `<span style="color:${c}">${a}</span> killed 2 underperforming Meta Ad campaigns`,
+  (a,c) => `<span style="color:${c}">${a}</span> screened 12 NNN lease opportunities in Sun Belt`,
+];
+
+/* ── render agents ─────────────────────────────────────────────── */
+const grid = document.getElementById('agents-grid');
+const taskIndexes = {};
+
+AGENTS.forEach(a => {
+  taskIndexes[a.id] = 0;
+  const card = document.createElement('div');
+  card.className = 'agent-card';
+  card.id = 'card-' + a.id;
+  card.style.setProperty('--agent-glow', hexAlpha(a.color, .15));
+  card.style.setProperty('--agent-color', a.color);
+
+  const initials = a.id.slice(0,2);
+  card.innerHTML = `
+    <div class="agent-head">
+      <div class="agent-avatar" style="background:linear-gradient(135deg,${hexAlpha(a.color,.4)},${hexAlpha(a.color,.15)});border:1px solid ${hexAlpha(a.color,.5)};box-shadow:0 0 12px ${hexAlpha(a.color,.2)}">${initials}</div>
+      <div>
+        <div class="agent-name" style="color:${a.color}">${a.id}</div>
+        <div class="agent-role-tag">${a.role}</div>
+      </div>
+      <div class="live-badge ${a.status}">${a.status === 'thinking' ? '◐ thinking' : '● live'}</div>
+    </div>
+    <div class="task-strip" id="task-${a.id}">${a.tasks[0]}</div>
+    <div class="agent-tools">${a.tools.slice(0,4).map(t=>`<span class="tool-chip">${t}</span>`).join('')}${a.tools.length>4?`<span class="tool-chip">+${a.tools.length-4}</span>`:''}</div>
+  `;
+  grid.appendChild(card);
+});
+
+/* ── render MCP servers ────────────────────────────────────────── */
+const mcpGrid = document.getElementById('mcp-grid');
+MCP_SERVERS.forEach(s => {
+  const div = document.createElement('div');
+  div.className = 'mcp-card';
+  div.innerHTML = `
+    <span class="mcp-dot connected" style="background:${s.color};box-shadow:0 0 8px ${s.color}"></span>
+    <div>
+      <div class="mcp-name">${s.name}</div>
+      <div class="mcp-meta">${s.tools} tools · via ${s.via}</div>
+    </div>
+  `;
+  mcpGrid.appendChild(div);
+});
+
+/* ── activity feed ─────────────────────────────────────────────── */
+const feed = document.getElementById('feed');
+function addActivity() {
+  const agent = AGENTS[Math.floor(Math.random() * (AGENTS.length - 1))]; // skip TON for variety
+  const tpl = ACTIVITY_TEMPLATES[Math.floor(Math.random() * ACTIVITY_TEMPLATES.length)];
+  const item = document.createElement('div');
+  item.className = 'feed-item';
+  const t = new Date().toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  item.innerHTML = `
+    <span class="feed-time">${t}</span>
+    <span class="feed-agent" style="color:${agent.color}">${agent.id}</span>
+    <span class="feed-msg">${tpl(agent.id, agent.color)}</span>
+  `;
+  feed.insertBefore(item, feed.firstChild);
+  while (feed.children.length > 8) feed.removeChild(feed.lastChild);
+}
+addActivity();
+setInterval(addActivity, 2800 + Math.random() * 1800);
+
+/* ── task rotation ─────────────────────────────────────────────── */
+setInterval(() => {
+  const a = AGENTS[Math.floor(Math.random() * AGENTS.length)];
+  taskIndexes[a.id] = (taskIndexes[a.id] + 1) % a.tasks.length;
+  const el = document.getElementById('task-' + a.id);
+  if (el) { el.style.opacity = 0; setTimeout(() => { el.textContent = a.tasks[taskIndexes[a.id]]; el.style.opacity = 1; }, 300); }
+}, 3200);
+
+/* ── health check ──────────────────────────────────────────────── */
+const healthLabel = document.getElementById('health-label');
+async function checkHealth() {
+  try {
+    const r = await fetch('http://localhost:3001/health');
+    if (r.ok) {
+      const d = await r.json();
+      healthLabel.textContent = `neural-link online · ${d.agents?.length ?? 6} agents · uptime ${Math.round(d.uptime ?? 0)}s`;
+    } else {
+      healthLabel.textContent = 'neural-link · no connection (start: npm run dev)';
+    }
+  } catch {
+    healthLabel.textContent = 'neural-link · localhost:3001 (start: npm run dev)';
+  }
+}
+checkHealth();
+setInterval(checkHealth, 15000);
+
+/* ── TON dispatch ──────────────────────────────────────────────── */
+const tonInput = document.getElementById('ton-input');
+const tonBtn = document.getElementById('ton-send');
+const tonOutput = document.getElementById('ton-output');
+
+async function dispatchTon() {
+  const msg = tonInput.value.trim();
+  if (!msg) return;
+  tonOutput.style.display = 'block';
+  tonOutput.textContent = '// dispatching to TON…';
+  tonBtn.disabled = true;
+  try {
+    const r = await fetch('http://localhost:3001/ton', {
+      method: 'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ command: msg }),
+    });
+    const d = await r.json();
+    tonOutput.textContent = JSON.stringify(d, null, 2);
+  } catch (e) {
+    tonOutput.textContent = `// neural-link not running locally — start with: npm run dev\n// Error: ${e.message}`;
+  }
+  tonBtn.disabled = false;
+}
+tonBtn.addEventListener('click', dispatchTon);
+tonInput.addEventListener('keydown', e => { if (e.key === 'Enter') dispatchTon(); });
+
+/* ── neural canvas ─────────────────────────────────────────────── */
+const cvs = document.getElementById('neural-canvas');
+const ctx = cvs.getContext('2d');
+const nodeColors = ['#00d4ff','#a855f7','#f59e0b','#10b981','#ef4444','#3b82f6'];
+
+let W, H, nodes = [], animFrame;
+
+function resize() {
+  W = cvs.width  = window.innerWidth;
+  H = cvs.height = window.innerHeight;
+  nodes = Array.from({length: 60}, () => ({
+    x: Math.random()*W, y: Math.random()*H,
+    vx: (Math.random()-.5)*.25, vy: (Math.random()-.5)*.25,
+    r: Math.random()*2+1,
+    color: nodeColors[Math.floor(Math.random()*nodeColors.length)],
+  }));
+}
+
+function drawCanvas() {
+  ctx.clearRect(0,0,W,H);
+  nodes.forEach(n => {
+    n.x += n.vx; n.y += n.vy;
+    if (n.x < 0 || n.x > W) n.vx *= -1;
+    if (n.y < 0 || n.y > H) n.vy *= -1;
+  });
+  for (let i = 0; i < nodes.length; i++) {
+    for (let j = i+1; j < nodes.length; j++) {
+      const dx = nodes[i].x - nodes[j].x, dy = nodes[i].y - nodes[j].y;
+      const d = Math.sqrt(dx*dx+dy*dy);
+      if (d < 140) {
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(0,212,255,${.12*(1-d/140)})`;
+        ctx.lineWidth = .6;
+        ctx.moveTo(nodes[i].x, nodes[i].y);
+        ctx.lineTo(nodes[j].x, nodes[j].y);
+        ctx.stroke();
+      }
+    }
+  }
+  nodes.forEach(n => {
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, n.r, 0, Math.PI*2);
+    ctx.fillStyle = n.color + '99';
+    ctx.fill();
+  });
+  animFrame = requestAnimationFrame(drawCanvas);
+}
+
+resize();
+drawCanvas();
+window.addEventListener('resize', () => { cancelAnimationFrame(animFrame); resize(); drawCanvas(); });
+
+/* ── helpers ───────────────────────────────────────────────────── */
+function hexAlpha(hex, a) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+</script>
