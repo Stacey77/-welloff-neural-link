@@ -1,0 +1,884 @@
+<title>Neural Link IDE</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/selection/active-line.min.js"></script>
+<style>
+/* Layout: one-screen IDE window — title bar / activity rail + sidebar + editor-over-panel / status bar */
+:root {
+  --ink: #0d1117;        /* window ground */
+  --ink-2: #131a24;      /* sidebar + panel */
+  --ink-3: #1a2331;      /* raised: tabs, inputs */
+  --line: #233044;       /* hairlines */
+  --text: #d5dde8;
+  --text-2: #8796ab;
+  --text-3: #56657a;
+  --signal: #38c8f0;     /* TON cyan: focus, active, links */
+  --ok: #3fc98a;
+  --warn: #e8b04a;
+  --err: #f0616d;
+  --font-ui: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+  --font-code: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body {
+  margin: 0; background: #070a0f; color: var(--text); font: 13px/1.45 var(--font-ui);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 12px; box-sizing: border-box; overflow: hidden;
+}
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--signal); outline-offset: -2px; }
+
+.app {
+  height: 100%; display: grid; border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+  background: var(--ink);
+  grid-template-columns: 46px var(--side-w, 264px) minmax(0, 1fr);
+  grid-template-rows: 38px minmax(0, 1fr) 24px;
+  grid-template-areas: "title title title" "rail side main" "status status status";
+}
+.app.side-hidden { grid-template-columns: 46px 0 minmax(0, 1fr); }
+
+/* Title bar */
+.titlebar { grid-area: title; display: flex; align-items: center; gap: 12px; padding: 0 12px;
+  background: var(--ink-2); border-bottom: 1px solid var(--line); min-width: 0; }
+.brand { display: flex; align-items: center; gap: 8px; font-weight: 600; letter-spacing: .01em; white-space: nowrap; }
+.brand-mark { width: 14px; height: 14px; border-radius: 3px;
+  background: conic-gradient(from 210deg, var(--signal), #a86ef0, #3fc98a, #e8b04a, var(--signal)); }
+.cmd-hint { flex: 1; min-width: 0; display: flex; justify-content: center; }
+.cmd-hint button { width: min(440px, 100%); background: var(--ink-3); border: 1px solid var(--line); border-radius: 6px;
+  padding: 4px 10px; color: var(--text-3); text-align: left; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cmd-hint button:hover { color: var(--text-2); border-color: #2f3e55; }
+.conn { display: inline-flex; align-items: center; gap: 6px; font: 11px var(--font-code); padding: 3px 9px; border-radius: 99px;
+  border: 1px solid var(--line); white-space: nowrap; background: none; }
+.conn .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--warn); }
+.conn.live .dot { background: var(--ok); box-shadow: 0 0 6px var(--ok); }
+.conn.live { color: var(--ok); }
+.conn.demo { color: var(--warn); }
+
+/* Activity rail */
+.rail { grid-area: rail; background: var(--ink-2); border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; padding-top: 6px; gap: 2px; }
+.rail button { width: 46px; height: 42px; background: none; border: 0; border-left: 2px solid transparent; color: var(--text-3); display: grid; place-items: center; }
+.rail button:hover { color: var(--text-2); }
+.rail button[aria-pressed="true"] { color: var(--text); border-left-color: var(--signal); }
+.rail svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Sidebar */
+.side { grid-area: side; background: var(--ink-2); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+.side-head { display: flex; align-items: center; justify-content: space-between; padding: 9px 12px 7px; font-size: 11px;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--text-2); font-weight: 500; }
+.side-head button { background: none; border: 0; color: var(--text-3); padding: 2px 4px; border-radius: 4px; font-size: 13px; }
+.side-head button:hover { color: var(--text); background: var(--ink-3); }
+.side-body { flex: 1; overflow: auto; padding-bottom: 12px; }
+.view[hidden] { display: none !important; }
+
+.tree { list-style: none; margin: 0; padding: 0; }
+.tree .row { display: flex; align-items: center; gap: 6px; padding: 2px 8px 2px calc(10px + var(--depth, 0) * 12px);
+  cursor: pointer; white-space: nowrap; color: var(--text-2); border: 1px solid transparent; }
+.tree .row:hover { background: var(--ink-3); color: var(--text); }
+.tree .row.active { background: rgba(56, 200, 240, .1); color: var(--text); border-color: rgba(56, 200, 240, .25); }
+.tree .chev { width: 10px; color: var(--text-3); font-size: 9px; transition: transform .12s; }
+.tree .open > .row .chev { transform: rotate(90deg); }
+.tree .closed > ul { display: none; }
+.badge-ext { font: 700 8.5px var(--font-code); padding: 1px 3px; border-radius: 3px; background: #1f4e7a; color: #9fd0ff; letter-spacing: .02em; }
+.badge-ext.json { background: #5a4a1a; color: #f2d58a; }
+.badge-ext.md { background: #2c3a4e; color: #b6c4d8; }
+.dirty-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-2); margin-left: auto; }
+
+.agent-list { display: flex; flex-direction: column; gap: 1px; padding: 0 6px; }
+.agent { display: grid; grid-template-columns: 8px minmax(0, 1fr) auto; gap: 9px; align-items: center; padding: 7px 8px; border-radius: 6px; }
+.agent:hover { background: var(--ink-3); }
+.agent .sw { width: 8px; height: 8px; border-radius: 2px; }
+.agent .nm { font: 600 12px var(--font-code); }
+.agent .rl { color: var(--text-3); font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.agent .acts { display: flex; gap: 4px; }
+.agent .acts button { background: var(--ink-3); border: 1px solid var(--line); border-radius: 4px; color: var(--text-2); font: 10.5px var(--font-code); padding: 2px 6px; }
+.agent .acts button:hover { color: var(--text); border-color: var(--signal); }
+.group-label { font: 10px var(--font-code); letter-spacing: .1em; text-transform: uppercase; color: var(--text-3); padding: 10px 14px 4px; }
+
+.a2a-log { font: 11px/1.5 var(--font-code); padding: 0 12px; display: flex; flex-direction: column; gap: 6px; }
+.a2a-log .msg { border-left: 2px solid var(--line); padding-left: 8px; color: var(--text-2); word-break: break-word; }
+.a2a-log .msg b { color: var(--text); font-weight: 500; }
+.empty { color: var(--text-3); padding: 8px 14px; font-size: 12px; }
+
+/* Main: editor over panel */
+.main { grid-area: main; display: grid; grid-template-rows: 34px 26px minmax(0, 1fr) 5px var(--panel-h, 240px); min-width: 0; min-height: 0; }
+.main.panel-hidden { grid-template-rows: 34px 26px minmax(0, 1fr) 0 0; }
+.tabs { display: flex; background: var(--ink-2); border-bottom: 1px solid var(--line); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+.tab { display: flex; align-items: center; gap: 7px; padding: 0 8px 0 12px; border-right: 1px solid var(--line); color: var(--text-3);
+  white-space: nowrap; cursor: pointer; font-size: 12.5px; position: relative; flex-shrink: 0; }
+.tab.active { background: var(--ink); color: var(--text); }
+.tab.active::before { content: ""; position: absolute; inset: 0 0 auto; height: 2px; background: var(--signal); }
+.tab .x { background: none; border: 0; color: var(--text-3); width: 18px; height: 18px; border-radius: 4px; line-height: 1; font-size: 14px; }
+.tab .x:hover { background: var(--ink-3); color: var(--text); }
+.tab.dirty .x::before { content: "●"; font-size: 10px; }
+.tab.dirty .x span { display: none; }
+.tab.dirty .x:hover::before { content: none; }
+.tab.dirty .x:hover span { display: inline; }
+.crumbs { display: flex; align-items: center; gap: 6px; padding: 0 14px; font: 11.5px var(--font-code); color: var(--text-3);
+  border-bottom: 1px solid var(--line); white-space: nowrap; overflow: hidden; }
+.crumbs .sep { color: #34445c; }
+.crumbs .ro { margin-left: auto; color: var(--warn); }
+.editor-wrap { position: relative; min-height: 0; min-width: 0; }
+.welcome { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 14px; color: var(--text-3); padding: 24px; }
+.welcome h2 { margin: 0; color: var(--text-2); font-weight: 500; font-size: 18px; text-wrap: balance; }
+.keys { display: grid; grid-template-columns: auto auto; gap: 6px 18px; justify-content: center; font-size: 12px; text-align: left; }
+kbd { font: 11px var(--font-code); background: var(--ink-3); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; color: var(--text-2); }
+.resizer { cursor: row-resize; background: var(--line); }
+.resizer:hover, .resizer.drag { background: var(--signal); }
+
+.panel { display: grid; grid-template-rows: 30px minmax(0, 1fr); background: var(--ink-2); min-height: 0; min-width: 0; }
+.panel-tabs { display: flex; align-items: center; gap: 2px; padding: 0 8px; border-bottom: 1px solid var(--line); }
+.panel-tabs button { background: none; border: 0; border-bottom: 1px solid transparent; color: var(--text-3); font-size: 11px; letter-spacing: .06em;
+  text-transform: uppercase; padding: 6px 10px 5px; }
+.panel-tabs button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--signal); }
+.panel-tabs .count { display: inline-block; min-width: 16px; padding: 0 4px; margin-left: 4px; border-radius: 8px; background: var(--ink-3); font: 10px var(--font-code); text-align: center; }
+.panel-tabs .count.err { background: rgba(240, 97, 109, .2); color: var(--err); }
+.panel-tabs .spacer { flex: 1; }
+.panel-body { min-height: 0; overflow: auto; }
+
+.term { font: 12.5px/1.55 var(--font-code); padding: 8px 14px 4px; min-height: 100%; box-sizing: border-box; cursor: text; }
+.term .ln { white-space: pre-wrap; word-break: break-word; }
+.term .in { color: var(--text); }
+.term .in::before { content: "❯ "; color: var(--signal); }
+.term .dim { color: var(--text-3); }
+.term .ok { color: var(--ok); }
+.term .err { color: var(--err); }
+.term .warn { color: var(--warn); }
+.term .acc { color: var(--signal); }
+.term .tool { color: #c9a6ff; }
+.prompt { display: flex; align-items: center; gap: 6px; padding-bottom: 6px; }
+.prompt .p { color: var(--signal); }
+.prompt input { flex: 1; min-width: 0; background: none; border: 0; outline: none; font: inherit; color: var(--text); padding: 0; }
+
+.problems { list-style: none; margin: 0; padding: 4px 0; font-size: 12.5px; }
+.problems li { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 8px; padding: 4px 14px; cursor: pointer; align-items: baseline; }
+.problems li:hover { background: var(--ink-3); }
+.problems .ic { color: var(--err); font-weight: 700; }
+.problems .loc { color: var(--text-3); font: 11px var(--font-code); white-space: nowrap; }
+.problems .msg { word-break: break-word; }
+.problems .code { color: var(--text-3); font: 11px var(--font-code); }
+pre.output { margin: 0; padding: 10px 14px; font: 12px/1.5 var(--font-code); color: var(--text-2); white-space: pre-wrap; word-break: break-word; }
+
+/* Status bar */
+.status { grid-area: status; display: flex; align-items: center; gap: 2px; padding: 0 6px; background: #0f2a3a; color: #bfe7f5; font: 11px var(--font-code); white-space: nowrap; overflow: hidden; }
+.status > * { padding: 0 8px; }
+.status button { background: none; border: 0; height: 24px; color: inherit; font: inherit; }
+.status button:hover { background: rgba(255, 255, 255, .08); }
+.status .grow { flex: 1; }
+.status .e { color: #ffb3b9; }
+
+/* Toast + dialog */
+.toast { position: fixed; right: calc(max(16px, env(safe-area-inset-right, 0px)) + 16px); bottom: calc(env(safe-area-inset-bottom, 0px) + 48px);
+  background: var(--ink-3); border: 1px solid var(--line); border-left: 3px solid var(--signal); border-radius: 6px; padding: 9px 14px;
+  font-size: 12.5px; box-shadow: 0 10px 30px rgba(0, 0, 0, .45); z-index: 50; max-width: min(380px, calc(100vw - 64px)); }
+.toast.err { border-left-color: var(--err); }
+.palette-back { position: fixed; inset: 0; background: rgba(3, 6, 10, .55); z-index: 40; display: flex; justify-content: center; padding: 70px 16px 16px; }
+.palette { width: min(560px, 100%); align-self: flex-start; background: var(--ink-2); border: 1px solid #2f3e55; border-radius: 8px; box-shadow: 0 20px 60px rgba(0, 0, 0, .6); overflow: hidden; }
+.palette input { width: 100%; box-sizing: border-box; background: var(--ink-3); border: 0; border-bottom: 1px solid var(--line); padding: 11px 14px; outline: none; font-size: 13.5px; }
+.palette ul { list-style: none; margin: 0; padding: 4px 0; max-height: 50vh; overflow: auto; }
+.palette li { display: flex; justify-content: space-between; gap: 12px; padding: 6px 14px; cursor: pointer; }
+.palette li.sel { background: rgba(56, 200, 240, .14); }
+.palette li .k { color: var(--text-3); font: 11px var(--font-code); }
+.keyform { padding: 14px; display: grid; gap: 10px; font-size: 12.5px; color: var(--text-2); }
+.keyform input { background: var(--ink-3); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; font: 12px var(--font-code); }
+.keyform .row { display: flex; gap: 8px; justify-content: flex-end; }
+.btn { background: var(--ink-3); border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; font-size: 12px; }
+.btn.primary { background: #134a60; border-color: #1f6e8c; color: #dff6ff; }
+
+/* CodeMirror 5 core (inlined; CSP allows stylesheets only from Google Fonts) */
+.CodeMirror { position: relative; overflow: hidden; height: 100%; font-family: var(--font-code); font-size: 13px; line-height: 1.6; direction: ltr; background: var(--ink); color: var(--text); }
+.CodeMirror-lines { padding: 8px 0; cursor: text; min-height: 1px; }
+.CodeMirror pre.CodeMirror-line, .CodeMirror pre.CodeMirror-line-like { padding: 0 12px; border-radius: 0; border-width: 0; background: transparent; font-family: inherit; font-size: inherit; margin: 0; white-space: pre; word-wrap: normal; line-height: inherit; color: inherit; z-index: 2; position: relative; overflow: visible; -webkit-tap-highlight-color: transparent; font-variant-ligatures: contextual; }
+.CodeMirror-scroll { overflow: scroll !important; margin-bottom: -50px; margin-right: -50px; padding-bottom: 50px; height: 100%; outline: none; position: relative; z-index: 0; }
+.CodeMirror-sizer { position: relative; border-right: 50px solid transparent; }
+.CodeMirror-vscrollbar, .CodeMirror-hscrollbar, .CodeMirror-scrollbar-filler, .CodeMirror-gutter-filler { position: absolute; z-index: 6; display: none; outline: none; }
+.CodeMirror-vscrollbar { right: 0; top: 0; overflow-x: hidden; overflow-y: scroll; }
+.CodeMirror-hscrollbar { bottom: 0; left: 0; overflow-y: hidden; overflow-x: scroll; }
+.CodeMirror-scrollbar-filler { right: 0; bottom: 0; background: var(--ink); }
+.CodeMirror-gutter-filler { left: 0; bottom: 0; background: var(--ink); }
+.CodeMirror-gutters { position: absolute; left: 0; top: 0; min-height: 100%; z-index: 3; background: var(--ink); border-right: 1px solid #18212e; white-space: nowrap; }
+.CodeMirror-gutter { white-space: normal; height: 100%; display: inline-block; vertical-align: top; margin-bottom: -50px; }
+.CodeMirror-gutter-wrapper { position: absolute; z-index: 4; background: none !important; border: none !important; }
+.CodeMirror-gutter-background { position: absolute; top: 0; bottom: 0; z-index: 4; }
+.CodeMirror-gutter-elt { position: absolute; cursor: default; z-index: 4; }
+.CodeMirror-linenumber { padding: 0 10px 0 14px; min-width: 24px; text-align: right; color: #3b4a60; white-space: nowrap; }
+.CodeMirror-linebackground { position: absolute; left: 0; right: 0; top: 0; bottom: 0; z-index: 0; }
+.CodeMirror-linewidget { position: relative; z-index: 2; padding: .1px; }
+.CodeMirror-code { outline: none; }
+.CodeMirror-scroll, .CodeMirror-sizer, .CodeMirror-gutter, .CodeMirror-gutters, .CodeMirror-linenumber { box-sizing: content-box; }
+.CodeMirror-measure { position: absolute; width: 100%; height: 0; overflow: hidden; visibility: hidden; }
+.CodeMirror-measure pre { position: static; }
+.CodeMirror-cursor { position: absolute; pointer-events: none; border-left: 2px solid var(--signal); border-right: none; width: 0; }
+div.CodeMirror-cursors { visibility: hidden; position: relative; z-index: 3; }
+.CodeMirror-focused div.CodeMirror-cursors { visibility: visible; }
+.CodeMirror-selected { background: #1d3147; }
+.CodeMirror-focused .CodeMirror-selected { background: #21405c; }
+.CodeMirror-line::selection, .CodeMirror-line > span::selection, .CodeMirror-line > span > span::selection { background: #21405c; }
+.cm-tab { display: inline-block; text-decoration: inherit; }
+.cm-force-border { padding-right: .1px; }
+.CodeMirror-activeline-background { background: #111824; }
+.CodeMirror-activeline-gutter .CodeMirror-linenumber { color: var(--text-2); }
+.CodeMirror-matchingbracket { color: var(--text) !important; outline: 1px solid #3a5878; }
+.line-error { background: rgba(240, 97, 109, .1); }
+.line-error-gutter .CodeMirror-linenumber { color: var(--err); }
+/* Syntax palette tuned to the window ground */
+.cm-keyword { color: #c792ea; }
+.cm-def { color: #82aaff; }
+.cm-variable { color: var(--text); }
+.cm-variable-2 { color: #a9c7e8; }
+.cm-variable-3, .cm-type { color: #ffcb6b; }
+.cm-property { color: #89ddff; }
+.cm-operator { color: #89ddff; }
+.cm-string, .cm-string-2 { color: #c3e88d; }
+.cm-number { color: #f78c6c; }
+.cm-atom { color: #f78c6c; }
+.cm-comment { color: #4f6178; font-style: italic; }
+.cm-meta { color: #ffcb6b; }
+.cm-error { color: var(--err); }
+
+@media (max-width: 760px) {
+  .app { grid-template-columns: 42px 0 minmax(0, 1fr); }
+  .app.side-open { grid-template-columns: 42px minmax(0, 1fr) 0; }
+  .app.side-open .main { visibility: hidden; }
+  .rail button { width: 42px; }
+  .cmd-hint { display: none; }
+  .titlebar { justify-content: space-between; }
+  .status .hide-sm { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="app" id="app">
+  <header class="titlebar">
+    <div class="brand"><span class="brand-mark" aria-hidden="true"></span>Neural Link IDE</div>
+    <div class="cmd-hint"><button id="open-palette" type="button">Go to file or run a command…  Ctrl P</button></div>
+    <button class="conn demo" id="conn" type="button" title="Connection settings"><span class="dot"></span><span id="conn-label">connecting</span></button>
+  </header>
+
+  <nav class="rail" aria-label="Views">
+    <button type="button" data-view="explorer" aria-pressed="true" title="Explorer (Ctrl+Shift+E)">
+      <svg viewBox="0 0 24 24"><path d="M4 4h6l2 2h8v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/></svg></button>
+    <button type="button" data-view="agents" aria-pressed="false" title="Agents">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="5" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><path d="M7 7l3 3M17 7l-3 3M7 17l3-3M17 17l-3-3"/></svg></button>
+    <button type="button" data-view="a2a" aria-pressed="false" title="A2A message bus">
+      <svg viewBox="0 0 24 24"><path d="M4 7h12l-3-3M20 17H8l3 3"/></svg></button>
+  </nav>
+
+  <aside class="side" id="side">
+    <section class="view" data-view="explorer">
+      <div class="side-head"><span>Explorer · src</span><button type="button" id="refresh-tree" title="Refresh">↻</button></div>
+    </section>
+    <section class="view" data-view="agents" hidden>
+      <div class="side-head"><span>Agents · 18</span></div>
+    </section>
+    <section class="view" data-view="a2a" hidden>
+      <div class="side-head"><span>A2A bus</span><button type="button" id="refresh-a2a" title="Refresh">↻</button></div>
+    </section>
+    <div class="side-body">
+      <div class="view" data-view="explorer"><ul class="tree" id="tree"></ul></div>
+      <div class="view" data-view="agents" hidden><div id="agents"></div></div>
+      <div class="view" data-view="a2a" hidden><div class="a2a-log" id="a2a"></div></div>
+    </div>
+  </aside>
+
+  <main class="main" id="main">
+    <div class="tabs" id="tabs" role="tablist" aria-label="Open files"></div>
+    <div class="crumbs" id="crumbs"><span>no file open</span></div>
+    <div class="editor-wrap" id="editor-wrap">
+      <div class="welcome" id="welcome">
+        <h2>Open a file from the explorer, or run an agent from the terminal</h2>
+        <div class="keys">
+          <span>Quick open</span><span><kbd>Ctrl</kbd> <kbd>P</kbd></span>
+          <span>Save</span><span><kbd>Ctrl</kbd> <kbd>S</kbd></span>
+          <span>Typecheck</span><span><kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>B</kbd></span>
+          <span>Toggle terminal</span><span><kbd>Ctrl</kbd> <kbd>`</kbd></span>
+        </div>
+      </div>
+    </div>
+    <div class="resizer" id="resizer" role="separator" aria-orientation="horizontal" aria-label="Resize panel"></div>
+    <section class="panel">
+      <div class="panel-tabs" role="tablist">
+        <button type="button" role="tab" data-panel="terminal" aria-selected="true">Terminal</button>
+        <button type="button" role="tab" data-panel="problems" aria-selected="false">Problems<span class="count" id="prob-count">0</span></button>
+        <button type="button" role="tab" data-panel="output" aria-selected="false">Output</button>
+        <span class="spacer"></span>
+      </div>
+      <div class="panel-body" id="panel-body">
+        <div data-pane="terminal" class="term" id="term">
+          <div id="term-out"></div>
+          <div class="prompt"><span class="p">❯</span><input id="term-in" autocomplete="off" spellcheck="false" aria-label="Terminal input" placeholder="type help"></div>
+        </div>
+        <div data-pane="problems" hidden><ul class="problems" id="problems"></ul></div>
+        <div data-pane="output" hidden><pre class="output" id="output">No build has run yet. Press Ctrl+Shift+B or type build.</pre></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="status">
+    <span>⎇ main</span>
+    <button type="button" id="st-problems" title="Problems">⊘ <span id="st-errs">0</span></button>
+    <span class="grow"></span>
+    <span id="st-pos" class="hide-sm"></span>
+    <span class="hide-sm">UTF-8</span>
+    <span id="st-lang">TypeScript</span>
+    <span id="st-mode">offline</span>
+  </footer>
+</div>
+
+<script id="demo-snapshot" type="application/json">{}</script>
+
+<script>
+(() => {
+'use strict';
+
+const AGENTS = [
+  { id: 'TON', role: 'Master orchestrator', group: 'Orchestration', color: '#38c8f0', run: 'ton scan Austin for FSBO leads and check infra costs' },
+  { id: 'BRAIN', role: 'Cognitive core, memory, planning', group: 'Orchestration', color: '#00e0b8', run: 'brain plan a PropTech expansion into Dallas' },
+  { id: 'GENESIS', role: 'Generates new agents', group: 'Orchestration', color: '#f0d24a', run: 'dispatch GENESIS describeCapabilities' },
+  { id: 'ARIA', role: 'Leads and Meta Ads', group: 'Real estate', color: '#a86ef0', run: 'dispatch ARIA listCampaigns' },
+  { id: 'DEVX', role: 'Google Ads, territory', group: 'Real estate', color: '#e8a23a', run: 'dispatch DEVX listGoogleCampaigns' },
+  { id: 'TERRA', role: 'Land and parcels', group: 'Real estate', color: '#3fc98a', run: 'dispatch TERRA assessParcel {"parcelId":"TX-4471"}' },
+  { id: 'CAPITA', role: 'Commercial investment', group: 'Real estate', color: '#f0616d', run: 'dispatch CAPITA analyzeNNN {"city":"Houston"}' },
+  { id: 'NOVA', role: 'Residential investment', group: 'Real estate', color: '#5b8cf0', run: 'dispatch NOVA rentalAnalysis {"zip":"75201"}' },
+  { id: 'NEXUS', role: 'Tech sector intel', group: 'Technology', color: '#7c7ff0', run: 'dispatch NEXUS scanTechFunding {"stage":"Series B"}' },
+  { id: 'FORGE', role: 'AI robotics fleets', group: 'Technology', color: '#f0843a', run: 'dispatch FORGE getFleetStatus' },
+  { id: 'ARCH', role: 'Civil engineering', group: 'Technology', color: '#9ad04a', run: 'dispatch ARCH runBimClashDetection {"project":"Tower C"}' },
+  { id: 'VOLT', role: 'Mechanical engineering', group: 'Technology', color: '#e8c33a', run: 'dispatch VOLT runFeaAnalysis {"part":"bracket-A2"}' },
+  { id: 'MOTOR', role: 'Automotive engineering', group: 'Technology', color: '#e85ca8', run: 'dispatch MOTOR diagnoseFaultCode {"code":"P0300"}' },
+  { id: 'MESH', role: 'Networking and security', group: 'Technology', color: '#2fc4b2', run: 'dispatch MESH mapNetworkTopology' },
+  { id: 'INFRA', role: 'IaaS', group: 'Cloud', color: '#2ea8e8', run: 'dispatch INFRA provisionCompute {"count":2,"size":"m7i.large"}' },
+  { id: 'PLAT', role: 'PaaS', group: 'Cloud', color: '#9a6af0', run: 'dispatch PLAT deployApplication {"app":"api","version":"2.4.1"}' },
+  { id: 'XAAS', role: 'XaaS orchestration', group: 'Cloud', color: '#f05a78', run: 'dispatch XAAS provisionTenant {"name":"Acme Corp","seats":5}' },
+  { id: 'NATURA', role: 'Nature and life sciences', group: 'Science', color: '#4cc96a', run: 'natura how do monarch butterflies navigate during migration?' },
+];
+
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('nl-ide:' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('nl-ide:' + k, JSON.stringify(v)); } catch { /* storage unavailable */ } },
+};
+
+const sameOrigin = /^https?:$/.test(location.protocol) && (location.port === '3001' || /^(localhost|127\.0\.0\.1)$/.test(location.hostname));
+const state = {
+  base: store.get('base', sameOrigin ? '' : 'http://localhost:3001'),
+  key: store.get('key', ''),
+  live: false,
+  tree: [],
+  files: new Map(),     // path -> { doc, saved, readOnly }
+  open: [],             // ordered paths
+  active: null,
+  problems: [],
+  history: store.get('history', []),
+  hIndex: -1,
+};
+
+let demo = {};
+try { demo = JSON.parse($('#demo-snapshot').textContent || '{}'); } catch { demo = {}; }
+
+/* ── API ── */
+async function api(path, opts = {}) {
+  const headers = { ...(opts.body ? { 'Content-Type': 'application/json' } : {}), ...(state.key ? { 'x-api-key': state.key } : {}) };
+  const res = await fetch(state.base + path, { ...opts, headers, body: opts.body ? JSON.stringify(opts.body) : undefined });
+  const text = await res.text();
+  let data; try { data = JSON.parse(text); } catch { data = { raw: text }; }
+  if (!res.ok) throw new Error(data.error ? (typeof data.error === 'string' ? data.error : JSON.stringify(data.error)) : `HTTP ${res.status}`);
+  return data;
+}
+
+async function connect() {
+  try {
+    const h = await api('/health');
+    state.live = true;
+    setConn(true, `live · ${h.agents?.length ?? 0} agents`);
+    return true;
+  } catch {
+    state.live = false;
+    setConn(false, demo.tree ? 'demo snapshot' : 'offline');
+    return false;
+  }
+}
+function setConn(live, label) {
+  const c = $('#conn');
+  c.classList.toggle('live', live); c.classList.toggle('demo', !live);
+  $('#conn-label').textContent = label;
+  $('#st-mode').textContent = live ? 'neural-link ' + (state.base || location.host) : 'demo mode';
+}
+
+/* ── Explorer ── */
+async function loadTree() {
+  if (state.live) {
+    try { state.tree = (await api('/ide/api/fs/tree')).tree; }
+    catch (e) { toast('Could not list files: ' + e.message, true); state.tree = []; }
+  } else {
+    state.tree = demo.tree || [];
+  }
+  renderTree();
+}
+const expanded = new Set(store.get('expanded', ['agents']));
+function renderTree() {
+  const root = $('#tree');
+  if (!state.tree.length) {
+    root.innerHTML = `<li class="empty">${state.live ? 'No files found in src/.' : 'Start neural-link to browse files: <code>npm run dev</code>, then open localhost:3001.'}</li>`;
+    return;
+  }
+  const build = (nodes, depth) => nodes.map((n) => {
+    if (n.type === 'dir') {
+      const open = expanded.has(n.path);
+      return `<li class="${open ? 'open' : 'closed'}" data-dir="${esc(n.path)}">
+        <div class="row" style="--depth:${depth}" role="treeitem" aria-expanded="${open}" tabindex="0"><span class="chev">▶</span>${esc(n.name)}</div>
+        <ul class="tree">${build(n.children || [], depth + 1)}</ul></li>`;
+    }
+    const ext = n.name.split('.').pop();
+    const f = state.files.get(n.path);
+    const dirty = f && f.doc && f.doc.getValue() !== f.saved;
+    return `<li><div class="row${state.active === n.path ? ' active' : ''}" style="--depth:${depth}" data-file="${esc(n.path)}" role="treeitem" tabindex="0">
+      <span class="chev"></span><span class="badge-ext ${ext}">${ext.toUpperCase()}</span>${esc(n.name)}${dirty ? '<span class="dirty-dot"></span>' : ''}</div></li>`;
+  }).join('');
+  root.innerHTML = build(state.tree, 0);
+}
+$('#tree').addEventListener('click', (e) => {
+  const row = e.target.closest('.row'); if (!row) return;
+  if (row.dataset.file) { openFile(row.dataset.file); return; }
+  const li = row.parentElement, p = li.dataset.dir;
+  if (expanded.has(p)) expanded.delete(p); else expanded.add(p);
+  store.set('expanded', [...expanded]); renderTree();
+});
+$('#tree').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.target.click(); } });
+$('#refresh-tree').addEventListener('click', loadTree);
+
+function allFiles(nodes = state.tree, out = []) {
+  for (const n of nodes) { if (n.type === 'dir') allFiles(n.children || [], out); else out.push(n.path); }
+  return out;
+}
+
+/* ── Editor ── */
+const cm = CodeMirror($('#editor-wrap'), {
+  value: '', mode: { name: 'javascript', typescript: true }, lineNumbers: true, indentUnit: 2, tabSize: 2,
+  matchBrackets: true, autoCloseBrackets: true, styleActiveLine: true, lineWrapping: false,
+  gutters: ['CodeMirror-linenumbers'],
+  extraKeys: {
+    'Ctrl-S': () => save(), 'Cmd-S': () => save(),
+    'Ctrl-P': () => openPalette(), 'Cmd-P': () => openPalette(),
+    'Shift-Ctrl-B': () => runBuild(), 'Shift-Cmd-B': () => runBuild(),
+    Tab: (c) => c.somethingSelected() ? c.indentSelection('add') : c.replaceSelection('  '),
+  },
+});
+const cmEl = cm.getWrapperElement();
+cmEl.hidden = true;
+cm.on('cursorActivity', () => { const p = cm.getCursor(); $('#st-pos').textContent = `Ln ${p.line + 1}, Col ${p.ch + 1}`; });
+cm.on('change', () => { renderTabs(); markDirtyInTree(); });
+
+function langFor(path) {
+  if (path.endsWith('.json')) return { mode: { name: 'javascript', json: true }, label: 'JSON' };
+  if (path.endsWith('.md')) return { mode: 'text/plain', label: 'Markdown' };
+  return { mode: { name: 'javascript', typescript: true }, label: 'TypeScript' };
+}
+
+async function openFile(path, line) {
+  let f = state.files.get(path);
+  if (!f) {
+    let content;
+    try {
+      if (state.live) content = (await api('/ide/api/fs/file?path=' + encodeURIComponent(path))).content;
+      else if (demo.files && path in demo.files) content = demo.files[path];
+      else { toast('This file is not in the demo snapshot. Start neural-link to open every file.', true); return; }
+    } catch (e) { toast('Could not open ' + path + ': ' + e.message, true); return; }
+    const { mode } = langFor(path);
+    f = { doc: CodeMirror.Doc(content, mode), saved: content, readOnly: !path.endsWith('.ts') };
+    state.files.set(path, f);
+  }
+  if (!state.open.includes(path)) state.open.push(path);
+  state.active = path;
+  cm.swapDoc(f.doc);
+  cm.setOption('readOnly', f.readOnly);
+  cmEl.hidden = false; $('#welcome').hidden = true;
+  cm.refresh();
+  applyProblemMarks();
+  if (line) { cm.setCursor({ line: line - 1, ch: 0 }); cm.scrollIntoView({ line: line - 1, ch: 0 }, 120); }
+  cm.focus();
+  $('#st-lang').textContent = langFor(path).label;
+  renderTabs(); renderCrumbs(); renderTree();
+}
+
+function closeFile(path) {
+  const f = state.files.get(path);
+  if (f && f.doc.getValue() !== f.saved && !pendingClose.has(path)) {
+    pendingClose.add(path);
+    toast(`${path} has unsaved changes. Click × again to discard them, or press Ctrl+S to save.`);
+    setTimeout(() => pendingClose.delete(path), 4000);
+    return;
+  }
+  pendingClose.delete(path);
+  if (f) state.files.delete(path);
+  state.open = state.open.filter((p) => p !== path);
+  if (state.active === path) {
+    const next = state.open[state.open.length - 1];
+    if (next) { openFile(next); return; }
+    state.active = null; cmEl.hidden = true; $('#welcome').hidden = false;
+    cm.swapDoc(CodeMirror.Doc(''));
+  }
+  renderTabs(); renderCrumbs(); renderTree();
+}
+const pendingClose = new Set();
+
+function renderTabs() {
+  $('#tabs').innerHTML = state.open.map((p) => {
+    const f = state.files.get(p); const dirty = f && f.doc.getValue() !== f.saved;
+    return `<div class="tab${p === state.active ? ' active' : ''}${dirty ? ' dirty' : ''}" role="tab" aria-selected="${p === state.active}" data-path="${esc(p)}" title="${esc(p)}">
+      <span class="badge-ext ${p.split('.').pop()}">${p.split('.').pop().toUpperCase()}</span>${esc(p.split('/').pop())}
+      <button type="button" class="x" aria-label="Close ${esc(p)}"><span>×</span></button></div>`;
+  }).join('');
+}
+$('#tabs').addEventListener('click', (e) => {
+  const tab = e.target.closest('.tab'); if (!tab) return;
+  if (e.target.closest('.x')) closeFile(tab.dataset.path); else openFile(tab.dataset.path);
+});
+$('#tabs').addEventListener('auxclick', (e) => { const t = e.target.closest('.tab'); if (t && e.button === 1) closeFile(t.dataset.path); });
+
+function renderCrumbs() {
+  const p = state.active;
+  if (!p) { $('#crumbs').innerHTML = '<span>no file open</span>'; return; }
+  const f = state.files.get(p);
+  $('#crumbs').innerHTML = ['src', ...p.split('/')].map((s) => `<span>${esc(s)}</span>`).join('<span class="sep">›</span>')
+    + (f.readOnly ? '<span class="ro">read-only</span>' : '');
+}
+let dirtyTimer;
+function markDirtyInTree() { clearTimeout(dirtyTimer); dirtyTimer = setTimeout(renderTree, 250); }
+
+async function save() {
+  const p = state.active; if (!p) return;
+  const f = state.files.get(p);
+  if (f.readOnly) { toast('Only .ts files can be saved from the IDE.', true); return; }
+  const content = f.doc.getValue();
+  if (!state.live) { f.saved = content; renderTabs(); renderTree(); toast('Demo mode: the change is kept in this tab only.'); return; }
+  try {
+    await api('/ide/api/fs/file', { method: 'PUT', body: { path: p, content } });
+    f.saved = content; renderTabs(); renderTree();
+    toast('Saved ' + p);
+    log(`saved src/${p}`, 'dim');
+  } catch (e) { toast('Save failed: ' + e.message, true); }
+}
+
+/* ── Problems / build ── */
+function applyProblemMarks() {
+  for (let i = 0; i < cm.lineCount(); i++) { cm.removeLineClass(i, 'background', 'line-error'); cm.removeLineClass(i, 'gutter', 'line-error-gutter'); }
+  if (!state.active) return;
+  state.problems.filter((p) => p.file === state.active).forEach((p) => {
+    cm.addLineClass(p.line - 1, 'background', 'line-error'); cm.addLineClass(p.line - 1, 'gutter', 'line-error-gutter');
+  });
+}
+function renderProblems() {
+  const n = state.problems.length;
+  $('#prob-count').textContent = n; $('#prob-count').classList.toggle('err', n > 0);
+  $('#st-errs').textContent = n; $('#st-problems').classList.toggle('e', n > 0);
+  $('#problems').innerHTML = n
+    ? state.problems.map((p, i) => `<li data-i="${i}"><span class="ic">✕</span><span class="msg">${esc(p.message)} <span class="code">${esc(p.code)}</span></span><span class="loc">${esc(p.file)}:${p.line}:${p.col}</span></li>`).join('')
+    : '<li class="empty" style="cursor:default">No problems found.</li>';
+  applyProblemMarks();
+}
+$('#problems').addEventListener('click', (e) => { const li = e.target.closest('li[data-i]'); if (!li) return; const p = state.problems[li.dataset.i]; openFile(p.file, p.line); });
+
+async function runBuild() {
+  showPanel('output');
+  $('#output').textContent = '$ tsc --noEmit\nRunning typecheck…';
+  if (!state.live) { $('#output').textContent += '\n\nDemo mode: start neural-link to run the TypeScript compiler.'; return; }
+  const dirty = state.open.filter((p) => { const f = state.files.get(p); return f.doc.getValue() !== f.saved; });
+  if (dirty.length) toast(`${dirty.length} unsaved file${dirty.length > 1 ? 's' : ''}. The typecheck reads what is on disk.`);
+  try {
+    const r = await api('/ide/api/build', { method: 'POST', body: {} });
+    state.problems = r.problems; renderProblems();
+    $('#output').textContent = `$ tsc --noEmit\n${r.output || ''}\n\n${r.ok ? '✓ No type errors' : `✕ ${r.problems.length} error(s)`} · ${(r.durationMs / 1000).toFixed(1)}s`;
+    log(r.ok ? `typecheck passed in ${(r.durationMs / 1000).toFixed(1)}s` : `typecheck found ${r.problems.length} error(s), see Problems`, r.ok ? 'ok' : 'err');
+    if (!r.ok) showPanel('problems');
+  } catch (e) { $('#output').textContent += '\n' + e.message; }
+}
+
+/* ── Panel ── */
+function showPanel(name) {
+  $('#main').classList.remove('panel-hidden');
+  $$('.panel-tabs [data-panel]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.panel === name)));
+  $$('#panel-body [data-pane]').forEach((p) => { p.hidden = p.dataset.pane !== name; });
+  if (name === 'terminal') setTimeout(() => $('#term-in').focus(), 0);
+}
+$$('.panel-tabs [data-panel]').forEach((b) => b.addEventListener('click', () => showPanel(b.dataset.panel)));
+$('#st-problems').addEventListener('click', () => showPanel('problems'));
+
+(() => {
+  const rz = $('#resizer'), main = $('#main');
+  let startY, startH;
+  const h0 = store.get('panelH', 240); main.style.setProperty('--panel-h', h0 + 'px');
+  rz.addEventListener('pointerdown', (e) => { startY = e.clientY; startH = $('.panel').offsetHeight; rz.classList.add('drag'); rz.setPointerCapture(e.pointerId); });
+  rz.addEventListener('pointermove', (e) => {
+    if (startY == null) return;
+    const h = Math.max(90, Math.min(main.offsetHeight - 140, startH - (e.clientY - startY)));
+    main.style.setProperty('--panel-h', h + 'px'); cm.refresh();
+  });
+  rz.addEventListener('pointerup', () => { startY = null; rz.classList.remove('drag'); store.set('panelH', $('.panel').offsetHeight); });
+})();
+
+/* ── Terminal ── */
+const out = $('#term-out');
+function log(text, cls = '') {
+  const d = document.createElement('div'); d.className = 'ln ' + cls; d.textContent = text; out.appendChild(d);
+  $('#panel-body').scrollTop = $('#panel-body').scrollHeight; return d;
+}
+function logJSON(obj) { log(typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2)); }
+
+const HELP = [
+  ['ton <message>', 'TON orchestrates across agents (tool-use loop)'],
+  ['stream <message>', 'Same as ton, streamed live with tool calls'],
+  ['brain <message>', 'BRAIN reasons with memory and A2A delegation'],
+  ['natura <question>', 'Ask NATURA about plants, animals, insects, science'],
+  ['dispatch <AGENT> <command> [json]', 'Run one agent command directly'],
+  ['workflow <json>', 'Run a DAG plan: {"steps":[{id,agentId,command,dependsOn}]}'],
+  ['build', 'Typecheck the project (tsc --noEmit)'],
+  ['open <path>', 'Open a file, e.g. open agents/TON.ts'],
+  ['agents · health · metrics · scheduler · a2a', 'Inspect the running server'],
+  ['clear', 'Clear the terminal'],
+];
+
+async function exec(line) {
+  const raw = line.trim(); if (!raw) return;
+  log(raw, 'in');
+  state.history = [raw, ...state.history.filter((h) => h !== raw)].slice(0, 60); store.set('history', state.history); state.hIndex = -1;
+  const [cmd, ...rest] = raw.split(/\s+/); const arg = raw.slice(cmd.length).trim();
+  const c = cmd.toLowerCase();
+
+  if (c === 'help') { HELP.forEach(([a, b]) => log(a.padEnd(36) + b, 'dim')); return; }
+  if (c === 'clear') { out.innerHTML = ''; return; }
+  if (c === 'build') { await runBuild(); showPanel('terminal'); return; }
+  if (c === 'open') { const p = arg.replace(/^src\//, ''); await openFile(p); return; }
+  if (c === 'agents') { AGENTS.forEach((a) => log(`${a.id.padEnd(8)} ${a.role}`)); return; }
+
+  if (!state.live) { demoReply(c, arg); return; }
+
+  try {
+    if (c === 'health') logJSON(await api('/health'));
+    else if (c === 'metrics') logJSON(await api('/metrics'));
+    else if (c === 'scheduler') logJSON(await api('/scheduler'));
+    else if (c === 'a2a') { const m = await api('/a2a/log'); m.length ? m.slice(-15).forEach((x) => log(`${x.from} → ${x.to ?? x.topic} · ${x.type}${x.topic ? ' · ' + x.topic : ''}`, 'dim')) : log('No A2A messages yet.', 'dim'); }
+    else if (c === 'ton' || c === 'brain') { need(arg); const t = log('thinking…', 'dim'); const r = await api('/' + c, { method: 'POST', body: { message: arg } }); t.remove(); printResult(r); }
+    else if (c === 'natura') { need(arg); const t = log('NATURA is researching…', 'dim'); const r = await api('/dispatch', { method: 'POST', body: { agentId: 'NATURA', command: 'query', params: { message: arg } } }); t.remove(); printResult(r); }
+    else if (c === 'stream') { need(arg); await stream(arg); }
+    else if (c === 'dispatch') {
+      const m = arg.match(/^(\S+)\s+(\S+)\s*(.*)$/s); if (!m) throw new Error('usage: dispatch <AGENT> <command> [json]');
+      const params = m[3] ? JSON.parse(m[3]) : {};
+      const t = log(`${m[1].toUpperCase()} running ${m[2]}…`, 'dim');
+      const r = await api('/dispatch', { method: 'POST', body: { agentId: m[1].toUpperCase(), command: m[2], params } }); t.remove(); printResult(r);
+    }
+    else if (c === 'workflow') { const plan = JSON.parse(arg); const t = log('executing DAG…', 'dim'); const r = await api('/workflow', { method: 'POST', body: plan }); t.remove(); logJSON(r); }
+    else log(`Unknown command "${cmd}". Type help.`, 'err');
+  } catch (e) { log(e.message, 'err'); }
+}
+function need(arg) { if (!arg) throw new Error('A message is required.'); }
+function printResult(r) {
+  const head = `${r.agentId ?? ''} ${r.status ?? ''}${r.latencyMs != null ? ' · ' + r.latencyMs + 'ms' : ''}`.trim();
+  if (head) log(head, r.status === 'error' ? 'err' : 'ok');
+  if (r.error) { log(r.error, 'err'); return; }
+  const res = r.result ?? r;
+  const text = res.summary ?? res.response ?? res.analysis;
+  if (typeof text === 'string') log(text); else logJSON(res);
+}
+
+async function stream(message) {
+  const res = await fetch(`${state.base}/stream/ton?message=${encodeURIComponent(message)}${state.key ? '&api_key=' + encodeURIComponent(state.key) : ''}`);
+  if (!res.body) throw new Error('Streaming is not supported here.');
+  const reader = res.body.getReader(), dec = new TextDecoder();
+  let buf = '', cur = null;
+  for (;;) {
+    const { done, value } = await reader.read(); if (done) break;
+    buf += dec.decode(value, { stream: true });
+    const parts = buf.split('\n\n'); buf = parts.pop() ?? '';
+    for (const p of parts) {
+      if (!p.startsWith('data: ')) continue;
+      let d; try { d = JSON.parse(p.slice(6)); } catch { continue; }
+      if (d.type === 'thinking') { cur = null; log(`· turn ${d.iteration + 1}`, 'dim'); }
+      else if (d.type === 'token') { if (!cur) cur = log('', ''); cur.textContent += d.text; }
+      else if (d.type === 'tool_use') log(`⚡ ${d.name}`, 'tool');
+      else if (d.type === 'tool_result') log(`  ↳ ${d.preview}`, 'dim');
+      else if (d.type === 'done') log('done', 'ok');
+      else if (d.type === 'error') log(d.message, 'err');
+      $('#panel-body').scrollTop = $('#panel-body').scrollHeight;
+    }
+  }
+}
+
+function demoReply(c, arg) {
+  const tag = '[demo] ';
+  const samples = {
+    health: { status: 'ok', agents: AGENTS.map((a) => a.id), uptime: 1824.3 },
+    metrics: { uptimeHuman: '0h 30m', totalCostUsd: 0.0412, a2aMessages: 37, mcpCalls: 112, agents: { TON: { calls: 6, inputTokens: 9120, outputTokens: 1044, p95LatencyMs: 2810 } } },
+    scheduler: { jobCount: 5, jobs: [{ name: 'forge-fleet-health', intervalHuman: '15m', runCount: 2 }, { name: 'aria-lead-scan', intervalHuman: '1h', runCount: 0 }] },
+  };
+  if (samples[c]) { log(tag + 'sample response, not live data', 'warn'); logJSON(samples[c]); return; }
+  if (['ton', 'stream', 'brain', 'natura', 'dispatch', 'workflow', 'a2a'].includes(c)) {
+    log(tag + 'neural-link is not reachable from this page.', 'warn');
+    log('Run it locally, then open http://localhost:3001 for the live IDE:', 'dim');
+    log('  cd welloff-neural-link && npm run dev', 'acc');
+    return;
+  }
+  log(`Unknown command "${c}". Type help.`, 'err');
+}
+
+const tin = $('#term-in');
+tin.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { const v = tin.value; tin.value = ''; exec(v); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); if (state.hIndex < state.history.length - 1) tin.value = state.history[++state.hIndex]; }
+  else if (e.key === 'ArrowDown') { e.preventDefault(); state.hIndex = Math.max(-1, state.hIndex - 1); tin.value = state.hIndex < 0 ? '' : state.history[state.hIndex]; }
+  else if (e.key === 'l' && e.ctrlKey) { e.preventDefault(); out.innerHTML = ''; }
+});
+$('#term').addEventListener('click', (e) => { if (!window.getSelection().toString() && e.target.id !== 'term-in') tin.focus(); });
+
+/* ── Agents view ── */
+function renderAgents() {
+  const groups = [...new Set(AGENTS.map((a) => a.group))];
+  $('#agents').innerHTML = groups.map((g) => `<div class="group-label">${g}</div><div class="agent-list">${AGENTS.filter((a) => a.group === g).map((a) => `
+    <div class="agent"><span class="sw" style="background:${a.color}"></span>
+      <div style="min-width:0"><div class="nm" style="color:${a.color}">${a.id}</div><div class="rl">${a.role}</div></div>
+      <div class="acts"><button type="button" data-src="${a.id}" title="Open agents/${a.id}.ts">src</button><button type="button" data-run="${a.id}" title="Put an example command in the terminal">run</button></div>
+    </div>`).join('')}</div>`).join('');
+}
+$('#agents').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.src) openFile(`agents/${b.dataset.src}.ts`);
+  if (b.dataset.run) { const a = AGENTS.find((x) => x.id === b.dataset.run); showPanel('terminal'); tin.value = a.run; tin.focus(); }
+});
+
+/* ── A2A view ── */
+async function loadA2A() {
+  const el = $('#a2a');
+  if (!state.live) { el.innerHTML = '<p class="empty" style="padding:4px 0">Messages between agents appear here while neural-link is running.</p>'; return; }
+  try {
+    const msgs = await api('/a2a/log');
+    el.innerHTML = msgs.length ? msgs.slice(-40).reverse().map((m) => `<div class="msg"><b>${esc(m.from)}</b> → <b>${esc(m.to ?? '*')}</b> · ${esc(m.type)}${m.topic ? ' · ' + esc(m.topic) : ''}<br><span style="color:var(--text-3)">${new Date(m.timestamp).toLocaleTimeString()}</span></div>`).join('')
+      : '<p class="empty" style="padding:4px 0">No messages yet. Scheduled jobs and BRAIN delegations post here.</p>';
+  } catch (e) { el.innerHTML = `<p class="empty">${esc(e.message)}</p>`; }
+}
+$('#refresh-a2a').addEventListener('click', loadA2A);
+
+/* ── Views / rail ── */
+function showView(v) {
+  const app = $('#app'), wasOpen = !app.classList.contains('side-hidden');
+  const cur = $('.rail [aria-pressed="true"]')?.dataset.view;
+  if (cur === v && wasOpen && window.innerWidth > 760) { app.classList.add('side-hidden'); cm.refresh(); return; }
+  app.classList.remove('side-hidden');
+  if (window.innerWidth <= 760) app.classList.toggle('side-open', !(cur === v && app.classList.contains('side-open')));
+  $$('.rail [data-view]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
+  $$('.side .view').forEach((s) => { s.hidden = s.dataset.view !== v; });
+  if (v === 'a2a') loadA2A();
+  cm.refresh();
+}
+$$('.rail [data-view]').forEach((b) => b.addEventListener('click', () => showView(b.dataset.view)));
+
+/* ── Palette (quick open + commands + connection) ── */
+function openPalette(mode = 'files') {
+  const back = document.createElement('div'); back.className = 'palette-back';
+  back.innerHTML = `<div class="palette" role="dialog" aria-label="Quick open"><input id="pal-in" placeholder="${mode === 'files' ? 'Type a file name, or > for commands' : '> command'}" value="${mode === 'cmds' ? '>' : ''}"><ul id="pal-list"></ul></div>`;
+  document.body.appendChild(back);
+  const input = $('#pal-in', back), list = $('#pal-list', back);
+  const cmds = [
+    { label: 'Typecheck project', k: 'Ctrl Shift B', run: runBuild },
+    { label: 'Save file', k: 'Ctrl S', run: save },
+    { label: 'Toggle terminal', k: 'Ctrl `', run: togglePanel },
+    { label: 'Connection settings', k: '', run: openKeyForm },
+    { label: 'Reconnect to neural-link', k: '', run: boot },
+    { label: 'Open dashboard', k: '', run: () => { location.href = state.base + '/dashboard'; } },
+  ];
+  let items = [], sel = 0;
+  const render = () => {
+    const q = input.value.trim();
+    if (q.startsWith('>')) {
+      const s = q.slice(1).trim().toLowerCase();
+      items = cmds.filter((c) => c.label.toLowerCase().includes(s)).map((c) => ({ label: c.label, k: c.k, run: c.run }));
+    } else {
+      const s = q.toLowerCase();
+      items = allFiles().filter((p) => p.toLowerCase().includes(s)).slice(0, 40).map((p) => ({ label: p.split('/').pop(), k: p, run: () => openFile(p) }));
+    }
+    sel = Math.min(sel, Math.max(0, items.length - 1));
+    list.innerHTML = items.length ? items.map((it, i) => `<li class="${i === sel ? 'sel' : ''}" data-i="${i}"><span>${esc(it.label)}</span><span class="k">${esc(it.k)}</span></li>`).join('')
+      : `<li><span class="k">${state.tree.length || q.startsWith('>') ? 'No matches' : 'No files loaded yet'}</span></li>`;
+  };
+  const close = () => back.remove();
+  const choose = (i) => { const it = items[i]; close(); if (it) it.run(); };
+  input.addEventListener('input', () => { sel = 0; render(); });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); sel = Math.min(items.length - 1, sel + 1); render(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); sel = Math.max(0, sel - 1); render(); }
+    else if (e.key === 'Enter') { e.preventDefault(); choose(sel); }
+    else if (e.key === 'Escape') close();
+  });
+  list.addEventListener('click', (e) => { const li = e.target.closest('li[data-i]'); if (li) choose(Number(li.dataset.i)); });
+  back.addEventListener('mousedown', (e) => { if (e.target === back) close(); });
+  render(); input.focus();
+}
+$('#open-palette').addEventListener('click', () => openPalette());
+
+function openKeyForm() {
+  const back = document.createElement('div'); back.className = 'palette-back';
+  back.innerHTML = `<div class="palette" role="dialog" aria-label="Connection settings"><form class="keyform" id="kf">
+    <label>Server address<br><input id="kf-base" value="${esc(state.base)}" placeholder="http://localhost:3001 (blank = this server)"></label>
+    <label>API key (only if NEURAL_API_KEY is set on the server)<br><input id="kf-key" type="password" value="${esc(state.key)}" placeholder="x-api-key"></label>
+    <div class="row"><button type="button" class="btn" id="kf-cancel">Cancel</button><button type="submit" class="btn primary">Connect</button></div>
+  </form></div>`;
+  document.body.appendChild(back);
+  $('#kf-base', back).focus();
+  $('#kf-cancel', back).addEventListener('click', () => back.remove());
+  $('#kf', back).addEventListener('submit', (e) => {
+    e.preventDefault();
+    state.base = $('#kf-base', back).value.trim().replace(/\/$/, ''); state.key = $('#kf-key', back).value.trim();
+    store.set('base', state.base); store.set('key', state.key); back.remove(); boot();
+  });
+}
+$('#conn').addEventListener('click', openKeyForm);
+
+function togglePanel() { $('#main').classList.toggle('panel-hidden'); cm.refresh(); if (!$('#main').classList.contains('panel-hidden')) tin.focus(); }
+
+document.addEventListener('keydown', (e) => {
+  const mod = e.ctrlKey || e.metaKey;
+  if (mod && e.key.toLowerCase() === 'p' && !e.shiftKey) { e.preventDefault(); if (!$('.palette-back')) openPalette(); }
+  else if (mod && e.shiftKey && e.key.toLowerCase() === 'p') { e.preventDefault(); if (!$('.palette-back')) openPalette('cmds'); }
+  else if (mod && e.key.toLowerCase() === 's') { e.preventDefault(); save(); }
+  else if (mod && e.shiftKey && e.key.toLowerCase() === 'b') { e.preventDefault(); runBuild(); }
+  else if (mod && e.key === '`') { e.preventDefault(); togglePanel(); }
+  else if (mod && e.shiftKey && e.key.toLowerCase() === 'e') { e.preventDefault(); showView('explorer'); }
+});
+window.addEventListener('beforeunload', (e) => {
+  if ([...state.files.values()].some((f) => f.doc.getValue() !== f.saved)) { e.preventDefault(); e.returnValue = ''; }
+});
+
+let toastTimer;
+function toast(msg, err = false) {
+  $('.toast')?.remove(); clearTimeout(toastTimer);
+  const t = document.createElement('div'); t.className = 'toast' + (err ? ' err' : ''); t.setAttribute('role', 'status'); t.textContent = msg;
+  document.body.appendChild(t); toastTimer = setTimeout(() => t.remove(), 3800);
+}
+
+/* ── Boot ── */
+async function boot() {
+  setConn(false, 'connecting');
+  const live = await connect();
+  await loadTree();
+  renderAgents();
+  if (!out.childElementCount) {
+    log('Neural Link IDE · 18 agents · type help for commands', 'acc');
+    log(live ? `connected to ${state.base || location.host}` : 'neural-link is not running, so this is a read-only demo snapshot of the source.', live ? 'ok' : 'warn');
+    if (!live) log('start it with: cd welloff-neural-link && npm run dev, then open http://localhost:3001', 'dim');
+  } else log(live ? 'reconnected' : 'still offline', live ? 'ok' : 'warn');
+  if (!state.active) {
+    const first = live ? 'agents/TON.ts' : Object.keys(demo.files || {})[0];
+    if (first) openFile(first);
+  }
+}
+boot();
+setInterval(() => { if (state.live) connect(); }, 20000);
+})();
+</script>
