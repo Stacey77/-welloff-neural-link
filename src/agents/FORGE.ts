@@ -24,3 +24,8 @@ export async function handle(command: AgentCommand): Promise<unknown> {
       throw new Error(`FORGE: unknown command "${command.command}"`);
   }
 }
+
+export async function runAutonomousScan(): Promise<void> {
+  const { callMcpTool: call } = await import('../connectors/mcp-client.js');
+  await call('get_robot_fleet_status', { includeAlerts: true, auto: true });
+}

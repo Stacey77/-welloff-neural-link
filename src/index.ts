@@ -10,23 +10,56 @@ import { push, summary } from './core/memory.js';
 import { DispatchRequestSchema, TonRequestSchema } from './types/index.js';
 import type { AgentResult } from './types/index.js';
 import { a2aBus } from './a2a/bus.js';
+import { apiKeyAuth, auditLog } from './middleware/auth.js';
+import { getMetrics } from './observability/metrics.js';
+import { startScheduler, getSchedulerStatus } from './scheduler/index.js';
+import { streamTon } from './stream/sse.js';
+import { executeDag } from './workflow/dag.js';
+import type { DagPlan } from './workflow/dag.js';
 
 const PORT = parseInt(process.env.PORT ?? '3001', 10);
 const AGENTS = [
   'ARIA', 'DEVX', 'TERRA', 'CAPITA', 'NOVA', 'TON',
   'NEXUS', 'FORGE', 'ARCH', 'VOLT', 'MOTOR', 'MESH',
-  'INFRA', 'PLAT', 'XAAS', 'BRAIN',
+  'INFRA', 'PLAT', 'XAAS', 'BRAIN', 'GENESIS', 'NATURA',
 ] as const;
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(auditLog);
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', agents: [...AGENTS], uptime: process.uptime() });
 });
 
-app.post('/dispatch', async (req, res) => {
+app.get('/metrics', (_req, res) => {
+  res.json(getMetrics());
+});
+
+app.get('/stream/ton', (req, res) => {
+  void streamTon(req, res);
+});
+
+app.get('/scheduler', (_req, res) => {
+  res.json(getSchedulerStatus());
+});
+
+app.post('/workflow', apiKeyAuth, async (req, res) => {
+  const plan = req.body as DagPlan;
+  if (!plan?.steps?.length) {
+    res.status(400).json({ error: 'steps array required' });
+    return;
+  }
+  try {
+    const execution = await executeDag(plan);
+    res.json(execution);
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+  }
+});
+
+app.post('/dispatch', apiKeyAuth, async (req, res) => {
   const parsed = DispatchRequestSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
@@ -69,7 +102,7 @@ app.post('/dispatch', async (req, res) => {
   res.status(statusCode).json(agentResult);
 });
 
-app.post('/ton', async (req, res) => {
+app.post('/ton', apiKeyAuth, async (req, res) => {
   const parsed = TonRequestSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
@@ -115,7 +148,7 @@ app.get('/memory', (_req, res) => {
   res.json(summary());
 });
 
-app.post('/brain', async (req, res) => {
+app.post('/brain', apiKeyAuth, async (req, res) => {
   const parsed = TonRequestSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
@@ -152,6 +185,7 @@ app.use('/mcp', mcpRouter);
 
 const server = http.createServer(app);
 startGateway(server);
+startScheduler();
 
 server.listen(PORT, () => {
   console.log(`welloff-neural-link running on port ${PORT}`);

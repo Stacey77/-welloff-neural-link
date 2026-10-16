@@ -15,6 +15,8 @@ import { handle as infra } from '../agents/INFRA.js';
 import { handle as plat } from '../agents/PLAT.js';
 import { handle as xaas } from '../agents/XAAS.js';
 import { handle as brain } from '../agents/BRAIN.js';
+import { handle as genesis } from '../agents/GENESIS.js';
+import { handle as natura } from '../agents/NATURA.js';
 
 const handlers: Record<string, (cmd: AgentCommand) => Promise<unknown>> = {
   ARIA: aria,
@@ -33,6 +35,8 @@ const handlers: Record<string, (cmd: AgentCommand) => Promise<unknown>> = {
   PLAT: plat,
   XAAS: xaas,
   BRAIN: brain,
+  GENESIS: genesis,
+  NATURA: natura,
 };
 
 export async function route(command: AgentCommand): Promise<unknown> {

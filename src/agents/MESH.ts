@@ -24,3 +24,8 @@ export async function handle(command: AgentCommand): Promise<unknown> {
       throw new Error(`MESH: unknown command "${command.command}"`);
   }
 }
+
+export async function runAutonomousScan(): Promise<void> {
+  const { callMcpTool: call } = await import('../connectors/mcp-client.js');
+  await call('scan_vulnerabilities', { scope: 'all', severity: 'high', auto: true });
+}

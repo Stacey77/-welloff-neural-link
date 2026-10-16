@@ -139,6 +139,23 @@
     <div class="ton-output" id="ton-output"></div>
   </div>
 
+  <div class="sector-label" style="margin-top:8px">
+    <span class="section-label">// streaming dispatch</span>
+    <span class="sector-rule"></span>
+  </div>
+  <div style="border:1px solid rgba(0,255,204,.2);background:linear-gradient(135deg,rgba(0,255,204,.04),rgba(0,255,204,.01));border-radius:var(--radius);padding:20px 24px;margin-bottom:40px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#00ffcc;font-weight:500;letter-spacing:.1em">STREAM</span>
+      <span style="font-size:12px;color:var(--fg3)">Real-time token-by-token output with live tool call events</span>
+    </div>
+    <div style="display:flex;gap:10px">
+      <input id="stream-input" style="flex:1;background:rgba(0,0,0,.4);border:1px solid rgba(0,255,204,.2);border-radius:10px;padding:12px 16px;color:var(--fg);font-family:'JetBrains Mono',monospace;font-size:13px;outline:none;transition:border-color .2s" placeholder="e.g. analyze robot fleet health and correlate with infra costs…" onfocus="this.style.borderColor='rgba(0,255,204,.5)'" onblur="this.style.borderColor='rgba(0,255,204,.2)'" />
+      <button id="stream-btn" style="background:linear-gradient(135deg,rgba(0,255,204,.2),rgba(0,255,204,.1));border:1px solid rgba(0,255,204,.35);color:#00ffcc;border-radius:10px;padding:12px 22px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;letter-spacing:.05em;cursor:pointer;transition:all .2s;white-space:nowrap">▶ Stream</button>
+    </div>
+    <div id="stream-output" style="display:none;margin-top:12px;padding:12px 14px;background:rgba(0,0,0,.3);border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#00ffcc;min-height:60px;max-height:260px;overflow-y:auto;white-space:pre-wrap;border:1px solid rgba(0,255,204,.1);word-break:break-word"></div>
+    <div id="stream-tools" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px"></div>
+  </div>
+
   <div class="sector-label">
     <span class="section-label">// real estate agents</span>
     <span class="sector-rule"></span>
@@ -190,6 +207,39 @@
     <span class="sector-rule"></span>
   </div>
   <div class="feed" id="feed"></div>
+
+  <div class="sector-label" style="margin-top:32px">
+    <span class="section-label">// observability</span>
+    <span class="sector-rule"></span>
+  </div>
+  <div id="metrics-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:40px">
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">
+      <div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--fg3);margin-bottom:6px">TOTAL COST</div>
+      <div id="met-cost" style="font-size:22px;font-weight:700;color:#00d4ff">$0.000</div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">
+      <div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--fg3);margin-bottom:6px">API CALLS</div>
+      <div id="met-calls" style="font-size:22px;font-weight:700;color:#a855f7">0</div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">
+      <div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--fg3);margin-bottom:6px">A2A MESSAGES</div>
+      <div id="met-a2a" style="font-size:22px;font-weight:700;color:#10b981">0</div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">
+      <div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--fg3);margin-bottom:6px">UPTIME</div>
+      <div id="met-uptime" style="font-size:22px;font-weight:700;color:#f59e0b">—</div>
+    </div>
+  </div>
+
+  <div class="sector-label" style="margin-top:8px">
+    <span class="section-label">// a2a agent communication network</span>
+    <span class="sector-rule"></span>
+  </div>
+  <div style="position:relative;border:1px solid rgba(255,255,255,.08);border-radius:14px;overflow:hidden;background:#0b0f1c;margin-bottom:40px">
+    <canvas id="a2a-canvas" style="width:100%;height:460px;display:block"></canvas>
+    <div style="position:absolute;top:12px;left:16px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#475569">// live a2a message bus</div>
+    <div id="a2a-count" style="position:absolute;top:12px;right:16px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#475569">0 messages routed</div>
+  </div>
 
 </div>
 
@@ -375,6 +425,168 @@ async function dispatchTon(){
 }
 tonBtn.addEventListener('click',dispatchTon);
 tonInput.addEventListener('keydown',e=>{if(e.key==='Enter')dispatchTon()});
+
+// ── Streaming dispatch ──
+const streamInput=document.getElementById('stream-input'),streamBtn=document.getElementById('stream-btn'),streamOutput=document.getElementById('stream-output'),streamToolsEl=document.getElementById('stream-tools');
+async function dispatchStream(){
+  const msg=streamInput.value.trim();if(!msg)return;
+  streamOutput.style.display='block';streamOutput.textContent='';streamToolsEl.innerHTML='';streamBtn.disabled=true;
+  try{
+    const resp=await fetch('http://localhost:3001/stream/ton?message='+encodeURIComponent(msg));
+    if(!resp.body){streamOutput.textContent='// stream not supported';return;}
+    const reader=resp.body.getReader(),decoder=new TextDecoder();let buf='';
+    while(true){const{done,value}=await reader.read();if(done)break;
+      buf+=decoder.decode(value,{stream:true});
+      const lines=buf.split('\n\n');buf=lines.pop()??'';
+      for(const line of lines){if(!line.startsWith('data: '))continue;
+        try{const d=JSON.parse(line.slice(6));
+          if(d.type==='token')streamOutput.textContent+=d.text;
+          else if(d.type==='tool_use'){const c=document.createElement('span');c.style.cssText='font-size:9px;font-family:JetBrains Mono,monospace;padding:2px 8px;border-radius:5px;background:rgba(0,255,204,.1);color:#00ffcc;border:1px solid rgba(0,255,204,.2)';c.textContent='⚡ '+d.name;streamToolsEl.appendChild(c);}
+          else if(d.type==='done')streamOutput.textContent+='\n\n// done'+(d.summary?': '+d.summary.slice(0,120):'');
+          else if(d.type==='error')streamOutput.textContent+='\n// error: '+d.message;
+        }catch{}
+      }
+    }
+  }catch(e){streamOutput.textContent='// neural-link offline\n// npm run dev in welloff-neural-link\n// '+e.message;}
+  streamBtn.disabled=false;
+}
+streamBtn.addEventListener('click',dispatchStream);
+streamInput.addEventListener('keydown',e=>{if(e.key==='Enter')dispatchStream();});
+
+// ── Metrics polling ──
+async function fetchMetrics(){
+  try{const r=await fetch('http://localhost:3001/metrics');if(!r.ok)return;const d=await r.json();
+    document.getElementById('met-cost').textContent='$'+(d.totalCostUsd??0).toFixed(4);
+    const calls=Object.values(d.agents??{}).reduce((s,a)=>s+(a.calls??0),0);
+    document.getElementById('met-calls').textContent=String(calls);
+    document.getElementById('met-a2a').textContent=String(d.a2aMessages??0);
+    document.getElementById('met-uptime').textContent=d.uptimeHuman??'—';
+  }catch{}
+}
+fetchMetrics();setInterval(fetchMetrics,15000);
+
+// ── A2A Force-Directed Graph ──
+(function(){
+const A2A_NODES=[
+  {id:'TON',  color:'#00d4ff',sector:'core'},  {id:'BRAIN',color:'#00ffcc',sector:'core'},
+  {id:'ARIA', color:'#a855f7',sector:'re'},     {id:'DEVX', color:'#f59e0b',sector:'re'},
+  {id:'TERRA',color:'#10b981',sector:'re'},     {id:'CAPITA',color:'#ef4444',sector:'re'},
+  {id:'NOVA', color:'#3b82f6',sector:'re'},
+  {id:'NEXUS',color:'#6366f1',sector:'tech'},   {id:'FORGE',color:'#f97316',sector:'tech'},
+  {id:'ARCH', color:'#84cc16',sector:'tech'},   {id:'VOLT', color:'#eab308',sector:'tech'},
+  {id:'MOTOR',color:'#ec4899',sector:'tech'},   {id:'MESH', color:'#14b8a6',sector:'tech'},
+  {id:'INFRA',color:'#0ea5e9',sector:'cloud'},  {id:'PLAT', color:'#7c3aed',sector:'cloud'},
+  {id:'XAAS', color:'#f43f5e',sector:'cloud'},
+];
+const SECTOR_TARGETS={core:{x:.5,y:.5},re:{x:.18,y:.38},tech:{x:.82,y:.38},cloud:{x:.5,y:.8}};
+const canvas=document.getElementById('a2a-canvas');
+const dpr=window.devicePixelRatio||1;
+let W,H;
+const nodes=A2A_NODES.map(n=>({...n,x:0,y:0,vx:0,vy:0,r:n.sector==='core'?17:11}));
+const pulses=[];
+let msgCount=0;
+
+function resize(){
+  W=canvas.offsetWidth*dpr;H=canvas.offsetHeight*dpr;
+  canvas.width=W;canvas.height=H;
+  // Initialize positions if needed
+  nodes.forEach(n=>{
+    const t=SECTOR_TARGETS[n.sector];
+    if(!n.x){n.x=t.x*W+(Math.random()-.5)*W*.15;n.y=t.y*H+(Math.random()-.5)*H*.15;}
+  });
+}
+resize();
+window.addEventListener('resize',resize);
+
+function tick(){
+  // Apply forces
+  nodes.forEach(n=>{
+    const t=SECTOR_TARGETS[n.sector];
+    const tx=t.x*W,ty=t.y*H;
+    // Spring toward sector center
+    n.vx+=(tx-n.x)*0.008;n.vy+=(ty-n.y)*0.008;
+    // Repulsion
+    nodes.forEach(m=>{if(m===n)return;
+      const dx=n.x-m.x,dy=n.y-m.y,d=Math.sqrt(dx*dx+dy*dy)||1;
+      const f=Math.min(1800,1800/(d*d));
+      n.vx+=dx/d*f*0.001;n.vy+=dy/d*f*0.001;
+    });
+    // Damping
+    n.vx*=0.82;n.vy*=0.82;
+    n.x=Math.max(n.r+4,Math.min(W-n.r-4,n.x+n.vx));
+    n.y=Math.max(n.r+4,Math.min(H-n.r-4,n.y+n.vy));
+  });
+}
+
+function drawFrame(){
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+  // Draw edges (faint)
+  ctx.globalAlpha=0.04;ctx.strokeStyle='#fff';ctx.lineWidth=0.5;
+  for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){
+    ctx.beginPath();ctx.moveTo(nodes[i].x,nodes[i].y);ctx.lineTo(nodes[j].x,nodes[j].y);ctx.stroke();
+  }
+  ctx.globalAlpha=1;
+  // Draw pulses
+  const now=Date.now();
+  pulses.forEach((p,i)=>{
+    const t=Math.min(1,(now-p.start)/p.dur);
+    if(t>=1){pulses.splice(i,1);return;}
+    const x=p.x1+(p.x2-p.x1)*t,y=p.y1+(p.y2-p.y1)*t;
+    const alpha=Math.sin(t*Math.PI);
+    ctx.beginPath();ctx.arc(x,y,5*alpha,0,Math.PI*2);
+    ctx.fillStyle=p.color+'cc';ctx.fill();
+    ctx.beginPath();ctx.arc(x,y,9*alpha,0,Math.PI*2);
+    ctx.strokeStyle=p.color+'44';ctx.lineWidth=2;ctx.stroke();
+    // Edge highlight
+    ctx.beginPath();ctx.moveTo(p.x1,p.y1);ctx.lineTo(p.x2,p.y2);
+    ctx.strokeStyle=p.color+Math.floor(alpha*80).toString(16).padStart(2,'0');
+    ctx.lineWidth=1.5;ctx.stroke();
+  });
+  // Draw nodes
+  nodes.forEach(n=>{
+    ctx.beginPath();ctx.arc(n.x,n.y,n.r,0,Math.PI*2);
+    ctx.fillStyle=n.color+'30';ctx.fill();
+    ctx.strokeStyle=n.color+'cc';ctx.lineWidth=n.sector==='core'?2:1.5;ctx.stroke();
+    ctx.fillStyle=n.color;ctx.font=`${n.sector==='core'?10:8}px 'JetBrains Mono',monospace`;
+    ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(n.id,n.x,n.y);
+  });
+  // Glow for BRAIN/TON
+  ['BRAIN','TON'].forEach(id=>{
+    const n=nodes.find(x=>x.id===id);if(!n)return;
+    const g=ctx.createRadialGradient(n.x,n.y,n.r,n.x,n.y,n.r*3);
+    g.addColorStop(0,n.color+'20');g.addColorStop(1,'transparent');
+    ctx.beginPath();ctx.arc(n.x,n.y,n.r*3,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+  });
+}
+
+function spawnPulse(fromId,toId){
+  const from=nodes.find(n=>n.id===fromId),to=nodes.find(n=>n.id===toId);
+  if(!from||!to)return;
+  msgCount++;
+  document.getElementById('a2a-count').textContent=msgCount+' messages routed';
+  pulses.push({x1:from.x,y1:from.y,x2:to.x,y2:to.y,color:from.color,start:Date.now(),dur:700+Math.random()*300});
+}
+
+// Simulate A2A messages
+const SIM_ROUTES=[['TON','ARIA'],['TON','NEXUS'],['BRAIN','TON'],['BRAIN','INFRA'],['FORGE','BRAIN'],['ARIA','DEVX'],['MESH','BRAIN'],['INFRA','PLAT'],['PLAT','XAAS'],['BRAIN','MESH'],['TON','VOLT'],['MOTOR','BRAIN'],['XAAS','PLAT'],['NEXUS','BRAIN']];
+
+setInterval(()=>{
+  const r=SIM_ROUTES[Math.floor(Math.random()*SIM_ROUTES.length)];
+  spawnPulse(r[0],r[1]);
+},1600+Math.random()*1400);
+
+// Fetch real A2A log
+setInterval(async()=>{
+  try{const r=await fetch('http://localhost:3001/a2a/log');if(!r.ok)return;
+    const msgs=await r.json();
+    msgs.slice(-5).forEach((m)=>{if(m.from&&m.to&&m.to!=='broadcast')spawnPulse(m.from,m.to);});
+  }catch{}
+},6000);
+
+function loop(){tick();drawFrame();requestAnimationFrame(loop);}
+loop();
+})();
 
 const cvs=document.getElementById('neural-canvas'),ctx=cvs.getContext('2d');
 let W,H,nodes=[],animFrame;

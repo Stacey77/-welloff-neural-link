@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import type { Tool, MessageParam } from '@anthropic-ai/sdk/resources/messages.js';
 import type { AgentCommand } from '../types/index.js';
 import { listMcpTools, callMcpTool } from '../connectors/mcp-client.js';
+import { recordTokenUsage } from '../observability/metrics.js';
 
 const claude = new Anthropic();
 
@@ -61,6 +62,8 @@ export async function handle(command: AgentCommand): Promise<unknown> {
       messages,
     });
 
+    recordTokenUsage('TON', response.usage);
+
     if (response.stop_reason === 'end_turn') {
       const text = response.content.find((b) => b.type === 'text');
       return { orchestratedBy: 'TON', summary: text?.type === 'text' ? text.text : 'Done' };
@@ -70,24 +73,18 @@ export async function handle(command: AgentCommand): Promise<unknown> {
 
     messages.push({ role: 'assistant', content: response.content });
 
-    const toolResults: MessageParam['content'] = [];
-
-    for (const block of response.content) {
-      if (block.type !== 'tool_use') continue;
-
-      let toolResult: unknown;
-      try {
-        toolResult = await callMcpTool(block.name, block.input as Record<string, unknown>);
-      } catch (err) {
-        toolResult = { error: err instanceof Error ? err.message : String(err) };
-      }
-
-      toolResults.push({
-        type: 'tool_result',
-        tool_use_id: block.id,
-        content: JSON.stringify(toolResult),
-      });
-    }
+    const toolUseBlocks = response.content.filter((b): b is import('@anthropic-ai/sdk/resources/messages.js').ToolUseBlock => b.type === 'tool_use');
+    const toolResults: MessageParam['content'] = await Promise.all(
+      toolUseBlocks.map(async (block) => {
+        let result: unknown;
+        try {
+          result = await callMcpTool(block.name, block.input as Record<string, unknown>);
+        } catch (err) {
+          result = { error: err instanceof Error ? err.message : String(err) };
+        }
+        return { type: 'tool_result' as const, tool_use_id: block.id, content: JSON.stringify(result) };
+      })
+    );
 
     messages.push({ role: 'user', content: toolResults });
   }

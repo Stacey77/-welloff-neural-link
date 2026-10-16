@@ -42,3 +42,8 @@ export async function handle(command: AgentCommand): Promise<unknown> {
       throw new Error(`ARIA: unknown command "${command.command}"`);
   }
 }
+
+export async function runAutonomousScan(): Promise<void> {
+  const { callMcpTool: call } = await import('../connectors/mcp-client.js');
+  await call('search_leads', { criteria: 'FSBO distressed', limit: 20, auto: true });
+}

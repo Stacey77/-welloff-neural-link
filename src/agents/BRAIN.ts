@@ -3,6 +3,8 @@ import type { MessageParam, Tool, TextBlock } from '@anthropic-ai/sdk/resources/
 import type { AgentCommand, AgentId } from '../types/index.js';
 import { listMcpTools, callMcpTool } from '../connectors/mcp-client.js';
 import { a2aBus } from '../a2a/bus.js';
+import { recordTokenUsage } from '../observability/metrics.js';
+import { appendMemory, searchMemory, loadMemory } from '../memory/store.js';
 
 const claude = new Anthropic();
 
@@ -127,10 +129,8 @@ async function executeTool(name: string, input: Record<string, unknown>): Promis
     }
 
     case 'recall_memory': {
-      const query = String(input.query ?? '').toLowerCase();
-      const relevant = MEMORY.filter((m) =>
-        m.content.toLowerCase().includes(query.split(' ')[0] ?? ''),
-      );
+      const query = String(input.query ?? '');
+      const relevant = searchMemory(query);
       return { query, found: relevant.length, excerpts: relevant.slice(-5) };
     }
 
@@ -182,6 +182,8 @@ export async function handle(command: AgentCommand): Promise<unknown> {
       messages,
     });
 
+    recordTokenUsage('BRAIN', response.usage);
+
     if (response.stop_reason === 'end_turn') {
       const text = response.content.find((b): b is TextBlock => b.type === 'text');
       finalText = text?.text ?? 'Cognitive processing complete.';
@@ -192,22 +194,18 @@ export async function handle(command: AgentCommand): Promise<unknown> {
 
     messages.push({ role: 'assistant', content: response.content });
 
-    const toolResults: MessageParam['content'] = [];
-
-    for (const block of response.content) {
-      if (block.type !== 'tool_use') continue;
-      let result: unknown;
-      try {
-        result = await executeTool(block.name, block.input as Record<string, unknown>);
-      } catch (err) {
-        result = { error: err instanceof Error ? err.message : String(err) };
-      }
-      toolResults.push({
-        type: 'tool_result',
-        tool_use_id: block.id,
-        content: JSON.stringify(result),
-      });
-    }
+    const toolUseBlocks = response.content.filter((b): b is import('@anthropic-ai/sdk/resources/messages.js').ToolUseBlock => b.type === 'tool_use');
+    const toolResults: MessageParam['content'] = await Promise.all(
+      toolUseBlocks.map(async (block) => {
+        let result: unknown;
+        try {
+          result = await executeTool(block.name, block.input as Record<string, unknown>);
+        } catch (err) {
+          result = { error: err instanceof Error ? err.message : String(err) };
+        }
+        return { type: 'tool_result' as const, tool_use_id: block.id, content: JSON.stringify(result) };
+      })
+    );
 
     messages.push({ role: 'user', content: toolResults });
   }
@@ -215,6 +213,8 @@ export async function handle(command: AgentCommand): Promise<unknown> {
   MEMORY.push({ role: 'user', content: userMessage });
   if (finalText) MEMORY.push({ role: 'assistant', content: finalText });
   while (MEMORY.length > MAX_MEMORY * 2) MEMORY.splice(0, 2);
+  appendMemory({ role: 'user', content: userMessage, timestamp: Date.now() });
+  if (finalText) appendMemory({ role: 'assistant', content: finalText, timestamp: Date.now() });
 
   return {
     cognitiveCore: 'BRAIN',
