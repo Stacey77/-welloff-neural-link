@@ -19,6 +19,8 @@ import type { DagPlan } from './workflow/dag.js';
 import { join } from 'path';
 import { readFileSync } from 'fs';
 import { ideRouter } from './ide/routes.js';
+import { initDeployments } from './ide/deploy.js';
+import { wrapPage } from './ide/static-site.js';
 
 const PORT = parseInt(process.env.PORT ?? '3001', 10);
 const AGENTS = [
@@ -189,22 +191,23 @@ app.use('/mcp', mcpRouter);
 app.use('/ide/api', ideRouter);
 function sendPage(file: string) {
   return (_req: express.Request, res: express.Response) => {
-    const body = readFileSync(join(__dirname, '..', file), 'utf8');
-    res.type('html').send(
-      '<!doctype html><html lang="en"><head><meta charset="utf-8">' +
-        '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">' +
-        `</head><body>${body}</body></html>`,
-    );
+    res.type('html').send(wrapPage(readFileSync(join(__dirname, '..', file), 'utf8')));
   };
 }
-app.get(['/', '/ide'], sendPage('ide.html'));
+const isDeployment = Boolean(process.env.NL_DEPLOYMENT_ID);
+app.get('/', sendPage(isDeployment ? 'index.html' : 'ide.html'));
+app.get('/ide', sendPage('ide.html'));
 app.get('/dashboard', sendPage('index.html'));
 
 const server = http.createServer(app);
 startGateway(server);
-startScheduler();
+if (process.env.NL_SCHEDULER !== 'off') startScheduler();
 
 server.listen(PORT, () => {
   console.log(`welloff-neural-link running on port ${PORT}`);
   console.log(`Agents: ${AGENTS.join(', ')}`);
+  if (!isDeployment) {
+    initDeployments();
+    console.log(`IDE: http://localhost:${PORT}`);
+  }
 });
