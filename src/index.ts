@@ -11,7 +11,10 @@ import { DispatchRequestSchema, TonRequestSchema } from './types/index.js';
 import type { AgentResult } from './types/index.js';
 
 const PORT = parseInt(process.env.PORT ?? '3001', 10);
-const AGENTS = ['ARIA', 'DEVX', 'TERRA', 'CAPITA', 'NOVA', 'TON'] as const;
+const AGENTS = [
+  'ARIA', 'DEVX', 'TERRA', 'CAPITA', 'NOVA', 'TON',
+  'NEXUS', 'FORGE', 'ARCH', 'VOLT', 'MOTOR', 'MESH',
+] as const;
 
 const app = express();
 app.use(cors());
