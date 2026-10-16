@@ -1,71 +1,72 @@
 import Anthropic from '@anthropic-ai/sdk';
-import type { AgentCommand, AgentId } from '../types/index.js';
-import { route } from '../core/router.js';
-import { randomUUID } from 'crypto';
+import type { Tool, MessageParam } from '@anthropic-ai/sdk/resources/messages.js';
+import type { AgentCommand } from '../types/index.js';
+import { listMcpTools, callMcpTool } from '../connectors/mcp-client.js';
 
 const claude = new Anthropic();
 
-const SYSTEM = `You are TON, the master orchestrator AI for the WellOff real estate platform.
-You coordinate a team of 5 specialized agents:
-
-- ARIA: Real estate agent AI. Handles Meta Ads campaigns (listCampaigns, createCampaign, getCampaignInsights, createLeadForm, getLeadFormSubmissions, killCampaigns) and lead generation (findLeads).
-- DEVX: Developer AI. Handles Google Ads campaigns (listGoogleCampaigns, createGoogleCampaign, getCampaignPerformance, getKeywordIdeas) and permit analysis (analyzePermits).
-- TERRA: Land development AI. Handles parcel assessment (assessParcel) and GIS data search (searchGISData).
-- CAPITA: Commercial investor AI. Handles NNN lease analysis (analyzeNNN) and commercial deal screening (screenDeals).
-- NOVA: Non-commercial investor AI. Handles rental property analysis (rentalAnalysis) and foreclosure screening (foreclosureScreen).
-
-Given any natural language command, determine the best agent and action to handle it.
-Respond ONLY with valid JSON in this exact shape:
-{
-  "agentId": "<ARIA|DEVX|TERRA|CAPITA|NOVA>",
-  "action": "<command name>",
-  "params": { <any relevant parameters extracted from the input> }
-}`;
-
-interface DispatchPlan {
-  agentId: AgentId;
-  action: string;
-  params: Record<string, unknown>;
-}
+const SYSTEM = `You are TON (Total Operations Navigator), the master orchestrator AI for the WellOff real estate platform.
+You coordinate 5 specialized agents — ARIA (leads & Meta Ads), DEVX (Google Ads & territory), TERRA (land & property), CAPITA (commercial), NOVA (media & residential) — by calling their tools directly.
+Use the available tools to fulfill the user's request. Call multiple tools if needed. Always return a concise summary of what was accomplished.`;
 
 export async function handle(command: AgentCommand): Promise<unknown> {
-  const naturalLanguageInput =
-    typeof command.params?.message === 'string'
-      ? command.params.message
-      : command.command;
+  const userMessage =
+    typeof command.params?.message === 'string' ? command.params.message : command.command;
 
-  const msg = await claude.messages.create({
-    model: 'claude-sonnet-4-5',
-    max_tokens: 512,
-    system: SYSTEM,
-    messages: [{ role: 'user', content: naturalLanguageInput }],
-  });
+  const mcpTools = await listMcpTools();
 
-  const raw = msg.content.find((b) => b.type === 'text');
-  if (!raw || raw.type !== 'text') {
-    throw new Error('TON: Claude returned no text content');
+  const tools: Tool[] = mcpTools.map((t) => ({
+    name: t.name,
+    description: t.description,
+    input_schema: (t.inputSchema as Tool['input_schema']) ?? { type: 'object', properties: {} },
+  }));
+
+  const messages: MessageParam[] = [{ role: 'user', content: userMessage }];
+
+  let iterations = 0;
+  const MAX_ITERATIONS = 8;
+
+  while (iterations < MAX_ITERATIONS) {
+    iterations++;
+
+    const response = await claude.messages.create({
+      model: 'claude-sonnet-4-5',
+      max_tokens: 2048,
+      system: SYSTEM,
+      tools,
+      messages,
+    });
+
+    if (response.stop_reason === 'end_turn') {
+      const text = response.content.find((b) => b.type === 'text');
+      return { orchestratedBy: 'TON', summary: text?.type === 'text' ? text.text : 'Done' };
+    }
+
+    if (response.stop_reason !== 'tool_use') break;
+
+    messages.push({ role: 'assistant', content: response.content });
+
+    const toolResults: MessageParam['content'] = [];
+
+    for (const block of response.content) {
+      if (block.type !== 'tool_use') continue;
+
+      let toolResult: unknown;
+      try {
+        toolResult = await callMcpTool(block.name, block.input as Record<string, unknown>);
+      } catch (err) {
+        toolResult = { error: err instanceof Error ? err.message : String(err) };
+      }
+
+      toolResults.push({
+        type: 'tool_result',
+        tool_use_id: block.id,
+        content: JSON.stringify(toolResult),
+      });
+    }
+
+    messages.push({ role: 'user', content: toolResults });
   }
 
-  let plan: DispatchPlan;
-  try {
-    plan = JSON.parse(raw.text) as DispatchPlan;
-  } catch {
-    throw new Error(`TON: could not parse dispatch plan from Claude response: ${raw.text}`);
-  }
-
-  const subCommand: AgentCommand = {
-    id: randomUUID(),
-    agentId: plan.agentId,
-    command: plan.action,
-    params: plan.params,
-    timestamp: Date.now(),
-  };
-
-  const result = await route(subCommand);
-
-  return {
-    orchestratedBy: 'TON',
-    plan,
-    result,
-  };
+  return { orchestratedBy: 'TON', summary: 'Orchestration complete', iterations };
 }

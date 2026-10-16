@@ -1,46 +1,29 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { callMcpTool } from '../connectors/mcp-client.js';
 import type { AgentCommand } from '../types/index.js';
-
-const claude = new Anthropic();
-
-const SYSTEM =
-  'You are NOVA, a non-commercial real estate investor AI for the WellOff platform. ' +
-  'You specialize in residential rental analysis, foreclosure screening, fix-and-flip evaluation, ' +
-  'and residential portfolio optimization.';
 
 export async function handle(command: AgentCommand): Promise<unknown> {
   const p = (command.params ?? {}) as Record<string, unknown>;
 
   switch (command.command) {
-    case 'rentalAnalysis': {
-      const msg = await claude.messages.create({
-        model: 'claude-sonnet-4-5',
-        max_tokens: 2048,
-        system: SYSTEM,
-        messages: [
-          {
-            role: 'user',
-            content: `Perform rental property analysis: ${JSON.stringify(p)}`,
-          },
-        ],
-      });
-      return msg.content;
-    }
+    case 'rentalAnalysis':
+    case 'searchProperties':
+      return callMcpTool('search_properties', p);
 
-    case 'foreclosureScreen': {
-      const msg = await claude.messages.create({
-        model: 'claude-sonnet-4-5',
-        max_tokens: 2048,
-        system: SYSTEM,
-        messages: [
-          {
-            role: 'user',
-            content: `Screen these foreclosure opportunities: ${JSON.stringify(p)}`,
-          },
-        ],
-      });
-      return msg.content;
-    }
+    case 'foreclosureScreen':
+    case 'searchLeads':
+      return callMcpTool('search_leads', { ...p, signalType: 'Pre-foreclosure Alert' });
+
+    case 'generateSocialContent':
+      return callMcpTool('generate_social_content', p);
+
+    case 'createPropertyVideo':
+      return callMcpTool('create_property_video', p);
+
+    case 'generateVirtualStaging':
+      return callMcpTool('generate_virtual_staging', p);
+
+    case 'createPropertyFlyer':
+      return callMcpTool('create_property_flyer', p);
 
     default:
       throw new Error(`NOVA: unknown command "${command.command}"`);
