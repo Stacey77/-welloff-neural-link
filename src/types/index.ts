@@ -2,11 +2,13 @@ import { z } from 'zod';
 
 export type AgentId =
   | 'ARIA' | 'DEVX' | 'TERRA' | 'CAPITA' | 'NOVA' | 'TON'
-  | 'NEXUS' | 'FORGE' | 'ARCH' | 'VOLT' | 'MOTOR' | 'MESH';
+  | 'NEXUS' | 'FORGE' | 'ARCH' | 'VOLT' | 'MOTOR' | 'MESH'
+  | 'INFRA' | 'PLAT' | 'XAAS' | 'BRAIN';
 
 export const AgentIdSchema = z.enum([
   'ARIA', 'DEVX', 'TERRA', 'CAPITA', 'NOVA', 'TON',
   'NEXUS', 'FORGE', 'ARCH', 'VOLT', 'MOTOR', 'MESH',
+  'INFRA', 'PLAT', 'XAAS', 'BRAIN',
 ]);
 
 export interface AgentCommand {

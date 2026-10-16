@@ -11,6 +11,10 @@ import { handle as arch } from '../agents/ARCH.js';
 import { handle as volt } from '../agents/VOLT.js';
 import { handle as motor } from '../agents/MOTOR.js';
 import { handle as mesh } from '../agents/MESH.js';
+import { handle as infra } from '../agents/INFRA.js';
+import { handle as plat } from '../agents/PLAT.js';
+import { handle as xaas } from '../agents/XAAS.js';
+import { handle as brain } from '../agents/BRAIN.js';
 
 const handlers: Record<string, (cmd: AgentCommand) => Promise<unknown>> = {
   ARIA: aria,
@@ -25,6 +29,10 @@ const handlers: Record<string, (cmd: AgentCommand) => Promise<unknown>> = {
   VOLT: volt,
   MOTOR: motor,
   MESH: mesh,
+  INFRA: infra,
+  PLAT: plat,
+  XAAS: xaas,
+  BRAIN: brain,
 };
 
 export async function route(command: AgentCommand): Promise<unknown> {

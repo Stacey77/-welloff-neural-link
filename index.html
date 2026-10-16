@@ -10,6 +10,7 @@
     --c-capita:#ef4444; --c-nova:#3b82f6;
     --c-nexus:#6366f1; --c-forge:#f97316; --c-arch:#84cc16;
     --c-volt:#eab308; --c-motor:#ec4899; --c-mesh:#14b8a6;
+    --c-infra:#0ea5e9; --c-plat:#7c3aed; --c-xaas:#f43f5e; --c-brain:#00ffcc;
     --radius:14px; color-scheme:dark;
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -119,7 +120,7 @@
       <div class="logo-hex"></div>
       <h1>WellOff Neural Link</h1>
     </div>
-    <p class="tagline">// universal AI operator — 12 agents · 14 MCP servers</p>
+    <p class="tagline">// universal AI operator — 16 agents · 17 MCP servers · A2A bus · BRAIN cognitive core</p>
     <div class="status-pill">
       <span class="status-dot"></span>
       <span id="health-label">checking status…</span>
@@ -129,7 +130,7 @@
   <div class="ton-box">
     <div class="ton-label">
       <span class="agent-id">TON</span>
-      <span class="agent-role">Total Operations Navigator — natural language dispatches across all 11 agents via MCP tool-use loop</span>
+      <span class="agent-role">Total Operations Navigator — natural language dispatches across all 15 agents via MCP tool-use loop</span>
     </div>
     <div class="ton-input-row">
       <input class="ton-input" id="ton-input" placeholder="e.g. scan for Series B tech companies in Austin, check robot fleet health, audit firewall rules on edge nodes…" />
@@ -151,7 +152,19 @@
   <div class="agents-grid" id="tech-grid"></div>
 
   <div class="sector-label" style="margin-top:8px">
-    <span class="section-label">// MCP server connections — 14 servers</span>
+    <span class="section-label">// cloud &amp; as-a-service agents</span>
+    <span class="sector-rule"></span>
+  </div>
+  <div class="agents-grid" id="cloud-grid"></div>
+
+  <div class="sector-label" style="margin-top:8px">
+    <span class="section-label">// cognitive core &amp; a2a bus</span>
+    <span class="sector-rule"></span>
+  </div>
+  <div class="agents-grid" id="brain-grid"></div>
+
+  <div class="sector-label" style="margin-top:8px">
+    <span class="section-label">// MCP server connections — 17 servers</span>
     <span class="sector-rule"></span>
   </div>
   <div class="mcp-grid" id="mcp-grid"></div>
@@ -168,6 +181,8 @@
     <div class="ep"><span class="ep-method get">GET</span><span class="ep-path">/mcp/tools</span></div>
     <div class="ep"><span class="ep-method post">POST</span><span class="ep-path">/mcp/call</span></div>
     <div class="ep"><span class="ep-method ws">WS</span><span class="ep-path">ws://localhost:3001</span></div>
+    <div class="ep"><span class="ep-method post">POST</span><span class="ep-path">/brain</span></div>
+    <div class="ep"><span class="ep-method get">GET</span><span class="ep-path">/a2a/log</span></div>
   </div>
 
   <div class="sector-label" style="margin-top:8px">
@@ -218,6 +233,24 @@ const TECH_AGENTS = [
     tasks:['Mapping topology: 3 data centers…','Anomalous traffic: 2.3Gbps spike on VLAN 40','Generating Terraform config for new VPC subnet','Auditing firewall: 14 deprecated ACL entries found','Scanning CVE-2024-3094 exposure on edge nodes'] },
 ];
 
+const CLOUD_AGENTS = [
+  { id:'INFRA',  color:'#0ea5e9', role:'IaaS AI',                    status:'active',
+    tools:['provision_compute','manage_storage','configure_networking','auto_scale_resource','optimize_costs','monitor_infrastructure'],
+    tasks:['Provisioning 4 EC2 instances for prod…','Auto-scaling triggered: 6→10 nodes on API cluster','Optimizing reserved vs on-demand spend: $12K/mo savings','Configuring VPC peering: dev↔prod environments','Storage lifecycle policy applied: 2.4TB archived'] },
+  { id:'PLAT',   color:'#7c3aed', role:'PaaS AI',                    status:'active',
+    tools:['deploy_application','manage_pipeline','provision_database','scale_service','manage_runtime','monitor_platform'],
+    tasks:['Deploying v2.4.1 to production cluster…','Pipeline green: 142 tests passed, 0 failures','Provisioning RDS Postgres 16.1 in us-east-1','Scaling payment-service: 3→8 replicas','Node.js 22 runtime migration: 7/12 services complete'] },
+  { id:'XAAS',   color:'#f43f5e', role:'XaaS Orchestrator AI',       status:'thinking',
+    tools:['provision_tenant','manage_billing','enforce_sla','manage_api_gateway','generate_service_catalog','deploy_white_label'],
+    tasks:['Onboarding tenant Acme Corp — 5 seats…','SLA breach alert: P95 latency 340ms on tier-2','Generating service catalog for enterprise bundle','API gateway rate-limit updated: 10K req/min','White-label deployment: TechCorp branding applied'] },
+];
+
+const BRAIN_AGENTS = [
+  { id:'BRAIN',  color:'#00ffcc', role:'Agentic Cognitive Core',     status:'thinking',
+    tools:['plan_workflow','delegate_to_agent','broadcast_insight','recall_memory','call_mcp_tool'],
+    tasks:['Synthesizing cross-domain signals: RE + cloud infra…','Planning multi-agent workflow for PropTech expansion','Recalling 42 interactions from long-term memory','Broadcasting market_alert to 6 subscribed agents','Delegating INFRA provisioning for new lead pipeline'] },
+];
+
 const MCP_SERVERS = [
   { name:'welloff-meta-ads',   tools:8,  color:'#0866ff' },
   { name:'welloff-google-ads', tools:5,  color:'#4285f4' },
@@ -233,9 +266,12 @@ const MCP_SERVERS = [
   { name:'welloff-volt',       tools:5,  color:'#eab308' },
   { name:'welloff-motor',      tools:5,  color:'#ec4899' },
   { name:'welloff-mesh',       tools:5,  color:'#14b8a6' },
+  { name:'welloff-infra',      tools:6,  color:'#0ea5e9' },
+  { name:'welloff-plat',       tools:6,  color:'#7c3aed' },
+  { name:'welloff-xaas',       tools:6,  color:'#f43f5e' },
 ];
 
-const ALL_AGENTS = [...RE_AGENTS, ...TECH_AGENTS];
+const ALL_AGENTS = [...RE_AGENTS, ...TECH_AGENTS, ...CLOUD_AGENTS, ...BRAIN_AGENTS];
 
 const ACTIVITY = [
   (a,c) => `<span style="color:${c}">${a}</span> scanned FSBO listings in 90028 — 8 leads found`,
@@ -252,6 +288,12 @@ const ACTIVITY = [
   (a,c) => `<span style="color:${c}">${a}</span> EV battery SoH dropped below threshold: Unit EV-118`,
   (a,c) => `<span style="color:${c}">${a}</span> DFMEA generated for drive shaft assembly — 7 risk items`,
   (a,c) => `<span style="color:${c}">${a}</span> talent exodus signal: 12 engineers left Acme Corp this month`,
+  (a,c) => `<span style="color:${c}">${a}</span> A2A broadcast: market_alert dispatched to 6 agents`,
+  (a,c) => `<span style="color:${c}">${a}</span> auto-scaled API cluster: 4→12 nodes, latency 340ms→89ms`,
+  (a,c) => `<span style="color:${c}">${a}</span> tenant Acme Corp provisioned — 5 seats, billing active`,
+  (a,c) => `<span style="color:${c}">${a}</span> SLA enforced: tier-1 P99 latency < 200ms maintained`,
+  (a,c) => `<span style="color:${c}">${a}</span> BRAIN workflow plan: 4-agent sequence for PropTech expansion`,
+  (a,c) => `<span style="color:${c}">${a}</span> cross-domain synthesis: RE demand spike + IaaS capacity alert`,
 ];
 
 const taskIndexes = {};
@@ -283,6 +325,8 @@ function renderGrid(agents, containerId) {
 
 renderGrid(RE_AGENTS, 're-grid');
 renderGrid(TECH_AGENTS, 'tech-grid');
+renderGrid(CLOUD_AGENTS, 'cloud-grid');
+renderGrid(BRAIN_AGENTS, 'brain-grid');
 
 const mcpGrid = document.getElementById('mcp-grid');
 MCP_SERVERS.forEach(s => {
