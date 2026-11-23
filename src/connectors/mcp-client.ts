@@ -1,3 +1,4 @@
+import { traced } from '../integrations/langsmith.js';
 import 'dotenv/config';
 
 const MCP_URL = process.env.WELLOFF_MCP_URL ?? 'http://localhost:3000/api/mcp';
@@ -64,6 +65,10 @@ export async function listMcpTools(): Promise<McpTool[]> {
 }
 
 export async function callMcpTool(name: string, args: Record<string, unknown>): Promise<unknown> {
+  return traced(name, 'tool', args, () => callMcpToolRaw(name, args), { outputs: (output) => ({ output }) });
+}
+
+async function callMcpToolRaw(name: string, args: Record<string, unknown>): Promise<unknown> {
   const result = await rpc<{ content: McpContent[] }>('tools/call', {
     name,
     arguments: args,

@@ -1,10 +1,10 @@
-import Anthropic from '@anthropic-ai/sdk';
-import type { MessageParam, Tool, ToolUseBlock, TextBlock, ToolResultBlockParam } from '@anthropic-ai/sdk/resources/messages.js';
 import { randomBytes, randomUUID } from 'crypto';
 import { join } from 'path';
 import { route } from '../core/router.js';
 import { AgentIdSchema } from '../types/index.js';
-import { recordTokenUsage } from '../observability/metrics.js';
+import { LlmSession, type ChatMessage, type ToolSpec, type ToolResult } from '../llm/index.js';
+import { trigger as triggerLindy } from '../integrations/lindy.js';
+import { traced } from '../integrations/langsmith.js';
 import { DATA_DIR, listFiles, readSrc, readSrcOrEmpty, writeSrc, runTypecheck, readJson, writeJson, safePath } from './workspace.js';
 
 export type TaskStatus = 'running' | 'review' | 'done' | 'error' | 'cancelled';
@@ -31,6 +31,9 @@ export interface IdeTask {
   autoApply: boolean;
   status: TaskStatus;
   model: string;
+  routedTo?: string;
+  routeReason?: string;
+  modelsUsed?: string[];
   createdAt: number;
   updatedAt: number;
   plan: PlanItem[];
@@ -44,7 +47,6 @@ export interface IdeTask {
 const TASKS_FILE = join(DATA_DIR, 'ide-tasks.json');
 const MAX_TASKS = 60;
 const MAX_ITER = 18;
-const MODEL = process.env.IDE_AGENT_MODEL ?? 'claude-opus-5-5';
 
 const tasks: IdeTask[] = readJson<IdeTask[]>(TASKS_FILE, []).map((t) =>
   t.status === 'running' ? { ...t, status: 'error', error: 'Interrupted by a server restart' } : t,
@@ -87,12 +89,13 @@ How you work:
 
 Keep edits focused on the request. Never touch files outside src/.`;
 
-const TOOLS: Tool[] = [
+const TOOLS: ToolSpec[] = [
   { name: 'update_plan', description: 'Replace the task plan checklist.', input_schema: { type: 'object', properties: { items: { type: 'array', items: { type: 'object', properties: { text: { type: 'string' }, done: { type: 'boolean' } }, required: ['text', 'done'] } } }, required: ['items'] } },
   { name: 'list_files', description: 'List every source file under src/ (paths are relative to src/).', input_schema: { type: 'object', properties: {} } },
   { name: 'read_file', description: 'Read a file under src/.', input_schema: { type: 'object', properties: { path: { type: 'string', description: 'Path relative to src/, e.g. agents/TON.ts' } }, required: ['path'] } },
   { name: 'propose_edit', description: 'Propose the complete new content for a .ts file under src/ (new files allowed). The user reviews it as a diff.', input_schema: { type: 'object', properties: { path: { type: 'string' }, content: { type: 'string', description: 'Complete file content' }, summary: { type: 'string', description: 'One sentence describing the change' } }, required: ['path', 'content', 'summary'] } },
   { name: 'typecheck', description: 'Run tsc --noEmit on the project and return errors.', input_schema: { type: 'object', properties: {} } },
+  { name: 'trigger_lindy', description: 'Send a JSON payload to the configured Lindy.ai workflow webhook (for emails, CRM updates, scheduling and other Lindy automations).', input_schema: { type: 'object', properties: { payload: { type: 'object' } }, required: ['payload'] } },
   { name: 'dispatch_agent', description: 'Run a platform agent command (ARIA, NEXUS, INFRA, NATURA, ...).', input_schema: { type: 'object', properties: { agentId: { type: 'string' }, command: { type: 'string' }, params: { type: 'object' } }, required: ['agentId', 'command'] } },
 ];
 
@@ -137,6 +140,8 @@ async function runTool(t: IdeTask, name: string, input: Record<string, unknown>)
       const r = await runTypecheck();
       return r.ok ? 'No type errors.' : r.problems.slice(0, 40).map((p) => `${p.file}:${p.line}:${p.col} ${p.code} ${p.message}`).join('\n');
     }
+    case 'trigger_lindy':
+      return JSON.stringify(await triggerLindy((input.payload as Record<string, unknown>) ?? {})).slice(0, 4_000);
     case 'dispatch_agent': {
       const agentId = AgentIdSchema.parse(String(input.agentId ?? '').toUpperCase());
       const result = await route({ id: randomUUID(), agentId, command: String(input.command ?? ''), params: (input.params as Record<string, unknown>) ?? {}, timestamp: Date.now() });
@@ -164,43 +169,46 @@ function settle(t: IdeTask): void {
 }
 
 async function execute(t: IdeTask): Promise<void> {
-  const claude = new Anthropic();
   const ctrl = new AbortController();
   controllers.set(t.id, ctrl);
   const intro = t.contextFile ? `The user has src/${t.contextFile} open in the editor.\n\n` : '';
-  const messages: MessageParam[] = [{ role: 'user', content: `${intro}${t.prompt}` }];
+  const messages: ChatMessage[] = [{ role: 'user', content: `${intro}${t.prompt}` }];
   try {
+    const session = new LlmSession('IDE', `code ${t.prompt}`, t.model);
+    t.routeReason = session.decision.reason;
+    t.routedTo = session.decision.spec;
+    touch(t);
     for (let i = 0; i < MAX_ITER; i++) {
       if (ctrl.signal.aborted) throw new Error('Cancelled');
-      const res = await claude.messages.create({ model: t.model, max_tokens: 16_000, system: SYSTEM, tools: TOOLS, messages }, { signal: ctrl.signal });
-      recordTokenUsage('IDE', res.usage);
-      t.tokens.input += res.usage?.input_tokens ?? 0;
-      t.tokens.output += res.usage?.output_tokens ?? 0;
-      const text = res.content.filter((b): b is TextBlock => b.type === 'text').map((b) => b.text).join('\n').trim();
-      if (res.stop_reason !== 'tool_use') {
-        t.summary = text || 'Finished.';
+      const res = await session.turn({ system: SYSTEM, tools: TOOLS, messages, maxTokens: 16_000, signal: ctrl.signal });
+      for (const a of res.attempts.filter((x) => !x.ok)) step(t, { kind: 'error', text: `Fell back from ${a.spec}`, detail: a.error });
+      t.routedTo = res.spec;
+      t.modelsUsed = [...session.used];
+      t.tokens.input += res.usage.input;
+      t.tokens.output += res.usage.output;
+      if (res.stop !== 'tool_use' || !res.toolCalls.length) {
+        t.summary = res.text || 'Finished.';
         break;
       }
-      if (text) step(t, { kind: 'thought', text: short(text, 400) });
-      messages.push({ role: 'assistant', content: res.content });
-      const calls = res.content.filter((b): b is ToolUseBlock => b.type === 'tool_use');
-      const results: ToolResultBlockParam[] = [];
-      for (const call of calls) {
-        const input = (call.input ?? {}) as Record<string, unknown>;
+      if (res.text) step(t, { kind: 'thought', text: short(res.text, 400) });
+      messages.push(res.assistant);
+      const results: ToolResult[] = [];
+      for (const call of res.toolCalls) {
+        const input = call.input;
         const label = call.name === 'read_file' || call.name === 'propose_edit' ? `${call.name} ${String(input.path ?? '')}`
           : call.name === 'dispatch_agent' ? `dispatch_agent ${String(input.agentId ?? '')}.${String(input.command ?? '')}` : call.name;
         try {
-          const out = await runTool(t, call.name, input);
+          const out = await traced(call.name, 'tool', input, () => runTool(t, call.name, input), { outputs: (o) => ({ output: o }) });
           if (call.name !== 'update_plan') step(t, { kind: 'tool', tool: call.name, text: label, detail: short(out, 240) });
-          results.push({ type: 'tool_result', tool_use_id: call.id, content: out });
+          results.push({ id: call.id, name: call.name, content: out });
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
           step(t, { kind: 'error', tool: call.name, text: `${label} failed`, detail: msg });
-          results.push({ type: 'tool_result', tool_use_id: call.id, content: msg, is_error: true });
+          results.push({ id: call.id, name: call.name, content: msg, isError: true });
         }
       }
-      messages.push({ role: 'user', content: results });
-      if (i === MAX_ITER - 1) t.summary = text || `Stopped after ${MAX_ITER} steps.`;
+      messages.push({ role: 'tool', results });
+      if (i === MAX_ITER - 1) t.summary = res.text || `Stopped after ${MAX_ITER} steps.`;
     }
     if (t.autoApply) {
       for (const a of t.artifacts) {
@@ -221,7 +229,7 @@ async function execute(t: IdeTask): Promise<void> {
   }
 }
 
-export function createTask(prompt: string, opts: { contextFile?: string; autoApply?: boolean }): IdeTask {
+export function createTask(prompt: string, opts: { contextFile?: string; autoApply?: boolean; model?: string }): IdeTask {
   if (!prompt.trim()) throw new Error('Describe what the agent should do.');
   const t: IdeTask = {
     id: `task_${randomBytes(4).toString('hex')}`,
@@ -229,7 +237,7 @@ export function createTask(prompt: string, opts: { contextFile?: string; autoApp
     contextFile: opts.contextFile && safePath(opts.contextFile) ? opts.contextFile : undefined,
     autoApply: Boolean(opts.autoApply),
     status: 'running',
-    model: MODEL,
+    model: typeof opts.model === 'string' && opts.model ? opts.model : 'auto',
     createdAt: Date.now(),
     updatedAt: Date.now(),
     plan: [],
@@ -240,7 +248,10 @@ export function createTask(prompt: string, opts: { contextFile?: string; autoApp
   tasks.unshift(t);
   if (tasks.length > MAX_TASKS) tasks.length = MAX_TASKS;
   persist();
-  void execute(t);
+  void traced('IDE agent task', 'chain', { prompt: t.prompt, contextFile: t.contextFile, model: t.model }, () => execute(t).then(() => t), {
+    metadata: { task: t.id },
+    outputs: (x) => ({ status: x.status, summary: x.summary, edits: x.artifacts.filter((a) => a.kind === 'edit').map((a) => (a as EditArtifact).path) }),
+  }).catch(() => undefined);
   return t;
 }
 

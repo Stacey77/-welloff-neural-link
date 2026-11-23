@@ -1,13 +1,9 @@
-import Anthropic from '@anthropic-ai/sdk';
-import type { Tool, MessageParam } from '@anthropic-ai/sdk/resources/messages.js';
 import type { AgentCommand } from '../types/index.js';
 import { listMcpTools, callMcpTool } from '../connectors/mcp-client.js';
-import { recordTokenUsage } from '../observability/metrics.js';
+import { LlmSession, type ChatMessage, type ToolSpec } from '../llm/index.js';
 
-const claude = new Anthropic();
-
-const SYSTEM = `You are TON (Total Operations Navigator), the master orchestrator AI for the WellOff universal agent platform.
-You coordinate 15 specialized agents by calling their MCP tools directly:
+export const SYSTEM = `You are TON (Total Operations Navigator), the master orchestrator AI for the WellOff universal agent platform.
+You coordinate 17 specialized agents by calling their MCP tools directly:
 
 REAL ESTATE:
 - ARIA: real estate leads, Meta Ads campaigns, lead enrichment, follow-up sequences
@@ -29,6 +25,12 @@ CLOUD & AS-A-SERVICE:
 - PLAT (PaaS): application deployment, CI/CD pipelines, managed databases, service scaling, runtime management, platform monitoring
 - XAAS (XaaS): multi-tenant provisioning, billing management, SLA enforcement, API gateway, service catalog, white-label deployment
 
+SCIENCE:
+- NATURA: nature and life sciences: plants, animals, insects, ecology, climate
+
+LLM CONDUCTOR:
+- MAESTRO: routes requests across many LLM providers, compares models, runs judged councils
+
 COGNITIVE CORE:
 - BRAIN: agentic reasoning, workflow planning, cross-domain synthesis, long-term memory, A2A orchestration
 
@@ -40,54 +42,33 @@ export async function handle(command: AgentCommand): Promise<unknown> {
 
   const mcpTools = await listMcpTools();
 
-  const tools: Tool[] = mcpTools.map((t) => ({
+  const tools: ToolSpec[] = mcpTools.map((t) => ({
     name: t.name,
     description: t.description,
-    input_schema: (t.inputSchema as Tool['input_schema']) ?? { type: 'object', properties: {} },
+    input_schema: (t.inputSchema as Record<string, unknown>) ?? { type: 'object', properties: {} },
   }));
 
-  const messages: MessageParam[] = [{ role: 'user', content: userMessage }];
-
-  let iterations = 0;
+  const session = new LlmSession('TON', userMessage, typeof command.params?.model === 'string' ? command.params.model : undefined);
+  const messages: ChatMessage[] = [{ role: 'user', content: userMessage }];
   const MAX_ITERATIONS = 8;
 
-  while (iterations < MAX_ITERATIONS) {
-    iterations++;
-
-    const response = await claude.messages.create({
-      model: 'claude-sonnet-4-5',
-      max_tokens: 2048,
-      system: SYSTEM,
-      tools,
-      messages,
-    });
-
-    recordTokenUsage('TON', response.usage);
-
-    if (response.stop_reason === 'end_turn') {
-      const text = response.content.find((b) => b.type === 'text');
-      return { orchestratedBy: 'TON', summary: text?.type === 'text' ? text.text : 'Done' };
+  for (let i = 1; i <= MAX_ITERATIONS; i++) {
+    const r = await session.turn({ system: SYSTEM, tools, messages, maxTokens: 8_000 });
+    if (r.stop !== 'tool_use' || !r.toolCalls.length) {
+      return { orchestratedBy: 'TON', summary: r.text || 'Done', model: r.spec, models: [...session.used], route: session.decision.reason, iterations: i };
     }
-
-    if (response.stop_reason !== 'tool_use') break;
-
-    messages.push({ role: 'assistant', content: response.content });
-
-    const toolUseBlocks = response.content.filter((b): b is import('@anthropic-ai/sdk/resources/messages.js').ToolUseBlock => b.type === 'tool_use');
-    const toolResults: MessageParam['content'] = await Promise.all(
-      toolUseBlocks.map(async (block) => {
-        let result: unknown;
+    messages.push(r.assistant);
+    const results = await Promise.all(
+      r.toolCalls.map(async (call) => {
         try {
-          result = await callMcpTool(block.name, block.input as Record<string, unknown>);
+          return { id: call.id, name: call.name, content: JSON.stringify(await callMcpTool(call.name, call.input)) };
         } catch (err) {
-          result = { error: err instanceof Error ? err.message : String(err) };
+          return { id: call.id, name: call.name, content: err instanceof Error ? err.message : String(err), isError: true };
         }
-        return { type: 'tool_result' as const, tool_use_id: block.id, content: JSON.stringify(result) };
-      })
+      }),
     );
-
-    messages.push({ role: 'user', content: toolResults });
+    messages.push({ role: 'tool', results });
   }
 
-  return { orchestratedBy: 'TON', summary: 'Orchestration complete', iterations };
+  return { orchestratedBy: 'TON', summary: 'Orchestration stopped after the step limit', models: [...session.used], iterations: MAX_ITERATIONS };
 }

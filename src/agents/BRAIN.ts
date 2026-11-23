@@ -1,12 +1,8 @@
-import Anthropic from '@anthropic-ai/sdk';
-import type { MessageParam, Tool, TextBlock } from '@anthropic-ai/sdk/resources/messages.js';
 import type { AgentCommand, AgentId } from '../types/index.js';
 import { listMcpTools, callMcpTool } from '../connectors/mcp-client.js';
 import { a2aBus } from '../a2a/bus.js';
-import { recordTokenUsage } from '../observability/metrics.js';
+import { LlmSession, type ChatMessage, type ToolSpec } from '../llm/index.js';
 import { appendMemory, searchMemory, loadMemory } from '../memory/store.js';
-
-const claude = new Anthropic();
 
 const MEMORY: { role: 'user' | 'assistant'; content: string }[] = [];
 const MAX_MEMORY = 20;
@@ -36,7 +32,7 @@ BRAIN CAPABILITIES:
 
 Always return structured reasoning: {intent, plan, actions, synthesis}`;
 
-const BRAIN_TOOLS: Tool[] = [
+const BRAIN_TOOLS: ToolSpec[] = [
   {
     name: 'plan_workflow',
     description: 'Decompose a complex goal into an ordered multi-agent execution plan',
@@ -150,64 +146,43 @@ export async function handle(command: AgentCommand): Promise<unknown> {
     typeof command.params?.message === 'string' ? command.params.message : command.command;
 
   const mcpTools = await listMcpTools().catch(() => []);
-  const allTools: Tool[] = [
+  const allTools: ToolSpec[] = [
     ...BRAIN_TOOLS,
     ...mcpTools.map((t) => ({
       name: t.name,
       description: t.description,
-      input_schema: (t.inputSchema as Tool['input_schema']) ?? { type: 'object', properties: {} },
+      input_schema: (t.inputSchema as Record<string, unknown>) ?? { type: 'object', properties: {} },
     })),
   ];
 
-  const contextMessages: MessageParam[] = MEMORY.slice(-MAX_MEMORY).map((m) => ({
-    role: m.role,
-    content: m.content,
-  }));
+  const messages: ChatMessage[] = MEMORY.slice(-MAX_MEMORY).map((m): ChatMessage =>
+    m.role === 'user' ? { role: 'user', content: m.content } : { role: 'assistant', text: m.content, toolCalls: [] },
+  );
+  messages.push({ role: 'user', content: userMessage });
 
-  contextMessages.push({ role: 'user', content: userMessage });
-
-  const messages: MessageParam[] = contextMessages;
+  const session = new LlmSession('BRAIN', userMessage, typeof command.params?.model === 'string' ? command.params.model : undefined);
   let iterations = 0;
   const MAX_ITER = 10;
   let finalText = '';
 
   while (iterations < MAX_ITER) {
     iterations++;
-
-    const response = await claude.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 4096,
-      system: SYSTEM,
-      tools: allTools,
-      messages,
-    });
-
-    recordTokenUsage('BRAIN', response.usage);
-
-    if (response.stop_reason === 'end_turn') {
-      const text = response.content.find((b): b is TextBlock => b.type === 'text');
-      finalText = text?.text ?? 'Cognitive processing complete.';
+    const r = await session.turn({ system: SYSTEM, tools: allTools, messages, maxTokens: 8_000 });
+    if (r.stop !== 'tool_use' || !r.toolCalls.length) {
+      finalText = r.text || 'Cognitive processing complete.';
       break;
     }
-
-    if (response.stop_reason !== 'tool_use') break;
-
-    messages.push({ role: 'assistant', content: response.content });
-
-    const toolUseBlocks = response.content.filter((b): b is import('@anthropic-ai/sdk/resources/messages.js').ToolUseBlock => b.type === 'tool_use');
-    const toolResults: MessageParam['content'] = await Promise.all(
-      toolUseBlocks.map(async (block) => {
-        let result: unknown;
+    messages.push(r.assistant);
+    const results = await Promise.all(
+      r.toolCalls.map(async (call) => {
         try {
-          result = await executeTool(block.name, block.input as Record<string, unknown>);
+          return { id: call.id, name: call.name, content: JSON.stringify(await executeTool(call.name, call.input)) };
         } catch (err) {
-          result = { error: err instanceof Error ? err.message : String(err) };
+          return { id: call.id, name: call.name, content: err instanceof Error ? err.message : String(err), isError: true };
         }
-        return { type: 'tool_result' as const, tool_use_id: block.id, content: JSON.stringify(result) };
-      })
+      }),
     );
-
-    messages.push({ role: 'user', content: toolResults });
+    messages.push({ role: 'tool', results });
   }
 
   MEMORY.push({ role: 'user', content: userMessage });
@@ -221,5 +196,7 @@ export async function handle(command: AgentCommand): Promise<unknown> {
     summary: finalText || 'Reasoning complete',
     memorySize: MEMORY.length,
     iterations,
+    models: [...session.used],
+    route: session.decision.reason,
   };
 }

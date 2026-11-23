@@ -1,9 +1,8 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { ask } from '../llm/index.js';
 import { writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import type { AgentCommand } from '../types/index.js';
 
-const claude = new Anthropic();
 const AGENTS_DIR = __dirname;
 
 const SYSTEM = `You are GENESIS, a meta-agent that generates TypeScript agent code for the WellOff neural-link platform.
@@ -39,16 +38,8 @@ ${tools.map((t, i) => `  case '${t}': → callMcpTool('${t}', p)`).join('\n')}
 
 Output only the TypeScript file content.`;
 
-      const response = await claude.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 2048,
-        system: SYSTEM,
-        messages: [{ role: 'user', content: prompt }],
-      });
-
-      const code = response.content.find(b => b.type === 'text')?.type === 'text'
-        ? (response.content.find(b => b.type === 'text') as { type: 'text'; text: string }).text
-        : '';
+      const r = await ask('GENESIS', `code generation: ${prompt}`, { system: SYSTEM, maxTokens: 8_000, model: typeof p.model === 'string' ? p.model : undefined });
+      const code = r.text.replace(/^```(?:typescript|ts)?\n?/i, '').replace(/\n?```\s*$/, '');
 
       if (!code.trim()) throw new Error('GENESIS: no code generated');
 
@@ -56,6 +47,7 @@ Output only the TypeScript file content.`;
 
       return {
         generated: true,
+        model: r.spec,
         agentId: name,
         filename,
         linesOfCode: code.split('\n').length,

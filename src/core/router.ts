@@ -1,4 +1,5 @@
 import type { AgentCommand } from '../types/index.js';
+import { traced } from '../integrations/langsmith.js';
 import { handle as aria } from '../agents/ARIA.js';
 import { handle as devx } from '../agents/DEVX.js';
 import { handle as terra } from '../agents/TERRA.js';
@@ -17,6 +18,8 @@ import { handle as xaas } from '../agents/XAAS.js';
 import { handle as brain } from '../agents/BRAIN.js';
 import { handle as genesis } from '../agents/GENESIS.js';
 import { handle as natura } from '../agents/NATURA.js';
+import { handle as maestro } from '../agents/MAESTRO.js';
+import { handle as lindy } from '../agents/LINDY.js';
 
 const handlers: Record<string, (cmd: AgentCommand) => Promise<unknown>> = {
   ARIA: aria,
@@ -37,6 +40,8 @@ const handlers: Record<string, (cmd: AgentCommand) => Promise<unknown>> = {
   BRAIN: brain,
   GENESIS: genesis,
   NATURA: natura,
+  MAESTRO: maestro,
+  LINDY: lindy,
 };
 
 export async function route(command: AgentCommand): Promise<unknown> {
@@ -44,5 +49,8 @@ export async function route(command: AgentCommand): Promise<unknown> {
   if (!handler) {
     throw new Error(`No handler registered for agentId "${command.agentId}"`);
   }
-  return handler(command);
+  return traced(`${command.agentId}.${command.command}`, 'chain', { agentId: command.agentId, command: command.command, params: command.params ?? {} }, () => handler(command), {
+    metadata: { agent: command.agentId },
+    outputs: (result) => ({ result }),
+  });
 }

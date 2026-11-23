@@ -273,6 +273,68 @@ kbd { font: 11px var(--font-code); background: var(--ink-3); border: 1px solid v
 .callout.err { border-color: rgba(240, 97, 109, .35); background: rgba(240, 97, 109, .07); color: #ffc4c9; }
 
 /* Deployments */
+/* Models surface */
+.s-models { overflow: auto; }
+.mx { max-width: 1180px; margin: 0 auto; padding: 18px 22px 40px; display: flex; flex-direction: column; gap: 28px; }
+.mx section > h2 { font-size: 15px; font-weight: 600; margin: 0 0 3px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.mx .sub { color: var(--text-2); font-size: 12.5px; margin: 0 0 12px; max-width: 78ch; }
+.mx .demo-note { border: 1px solid rgba(201, 166, 255, .3); background: rgba(201, 166, 255, .06); border-radius: 8px; padding: 9px 12px; font-size: 12.5px; color: var(--text-2); }
+.route-try { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.route-try input, .arena-form textarea { flex: 1; min-width: 0; background: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; outline: none; }
+.route-try input:focus, .arena-form textarea:focus { border-color: rgba(56, 200, 240, .5); }
+.route-out { font: 12px/1.5 var(--font-code); color: var(--text-2); margin-top: 8px; word-break: break-word; }
+.route-out b { color: var(--signal); font-weight: 500; }
+.assign { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 8px; }
+.assign-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); align-items: center; gap: 10px; background: var(--ink-2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.assign-row .nm { font: 600 12px var(--font-code); }
+.assign-row .rl { color: var(--text-3); font-size: 11.5px; }
+select.sel { background: var(--ink-3); border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; font: 11.5px var(--font-code); max-width: 100%; min-width: 0; width: 100%; }
+.prov-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.prov { background: var(--ink-2); border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+.prov.dim { opacity: .62; }
+.prov-h { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.prov-h b { font-weight: 600; flex: 1; min-width: 0; }
+.prov .key { font: 11px var(--font-code); color: var(--text-3); }
+.prov .acts { display: flex; gap: 6px; flex-wrap: wrap; }
+.mchips { display: flex; flex-wrap: wrap; gap: 4px; }
+.mchip { font: 10.5px var(--font-code); padding: 1px 6px; border-radius: 4px; background: var(--ink-3); border: 1px solid var(--line); color: var(--text-2); white-space: nowrap; }
+.mchip .t { margin-left: 5px; }
+.mchip.frontier .t { color: #c9a6ff; } .mchip.balanced .t { color: var(--signal); } .mchip.fast .t { color: var(--ok); }
+.arena-form { display: flex; flex-direction: column; gap: 10px; }
+.arena-form textarea { resize: vertical; min-height: 64px; }
+.pick { display: flex; flex-wrap: wrap; gap: 6px; }
+.pick label { display: inline-flex; gap: 6px; align-items: center; font: 11.5px var(--font-code); background: var(--ink-3); border: 1px solid var(--line); border-radius: 6px; padding: 3px 8px; cursor: pointer; }
+.pick input { accent-color: var(--signal); margin: 0; }
+.pick label:has(input:checked) { border-color: rgba(56, 200, 240, .5); color: var(--text); }
+.arena-res { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; margin-top: 12px; }
+.ans { background: var(--ink-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.ans.win { border-color: rgba(63, 201, 138, .55); }
+.ans .h { display: flex; justify-content: space-between; align-items: center; gap: 8px; font: 500 11.5px var(--font-code); }
+.ans .m { color: var(--text-3); font: 10.5px var(--font-code); font-variant-numeric: tabular-nums; }
+.ans .tx { white-space: pre-wrap; word-break: break-word; font-size: 12.5px; max-height: 240px; overflow: auto; }
+.ans .err { color: #ffb3b9; font-size: 12px; word-break: break-word; }
+.scorebar { height: 4px; background: var(--ink-3); border-radius: 2px; overflow: hidden; }
+.scorebar i { display: block; height: 100%; background: var(--ok); }
+.verdict { border: 1px solid rgba(63, 201, 138, .35); background: rgba(63, 201, 138, .06); border-radius: 10px; padding: 12px 14px; margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.verdict .tx { white-space: pre-wrap; word-break: break-word; line-height: 1.55; max-width: 85ch; }
+.verdict .m { font: 11px var(--font-code); color: var(--text-3); }
+.integ { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; }
+.integ .card { background: var(--ink-2); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+.integ .card h3 { margin: 0; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.integ .card p { margin: 0; color: var(--text-2); font-size: 12.5px; }
+.integ pre { margin: 0; background: #0a0e14; border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; font: 11px/1.5 var(--font-code); overflow-x: auto; color: var(--text-2); }
+.kv { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 3px 12px; font: 11.5px var(--font-code); }
+.kv > span:nth-child(odd) { color: var(--text-3); }
+.kv > span { overflow-wrap: anywhere; }
+.tbl-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+.stats { width: 100%; border-collapse: collapse; font: 11.5px var(--font-code); font-variant-numeric: tabular-nums; }
+.stats th, .stats td { padding: 6px 10px; border-bottom: 1px solid #18212e; text-align: right; white-space: nowrap; }
+.stats th { color: var(--text-3); font-weight: 500; background: var(--ink-2); }
+.stats th:first-child, .stats td:first-child { text-align: left; }
+.stats tr:last-child td { border-bottom: 0; }
+.comp-row select.sel { width: auto; max-width: 210px; }
+.row-acts { display: flex; gap: 6px; flex-wrap: wrap; }
+a.mini { text-decoration: none; display: inline-flex; align-items: center; }
 .s-deploy { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden; }
 .dp-top { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px 20px; padding: 14px 18px; border-bottom: 1px solid var(--line); background: var(--ink-2); align-items: center; }
 .prod-card { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; min-width: 0; }
@@ -449,6 +511,7 @@ div.CodeMirror-cursors { visibility: hidden; position: relative; z-index: 3; }
       <button type="button" data-surface="editor" aria-pressed="true" title="Editor (Ctrl+E toggles)">Editor</button>
       <button type="button" data-surface="manager" aria-pressed="false" title="Agent Manager (Ctrl+E toggles)">Agent Manager <span class="n" id="review-count" hidden>0</span></button>
       <button type="button" data-surface="deploy" aria-pressed="false" title="Deployments">Deployments</button>
+      <button type="button" data-surface="models" aria-pressed="false" title="Models, agents and integrations">Models</button>
     </div>
     <div class="cmd-hint"><button id="open-palette" type="button">Go to file or command…  Ctrl P</button></div>
     <button class="conn demo" id="conn" type="button" title="Connection settings"><span class="dot"></span><span id="conn-label">connecting</span></button>
@@ -511,13 +574,14 @@ div.CodeMirror-cursors { visibility: hidden; position: relative; z-index: 3; }
         </div>
       </div>
       <aside class="agent-col" id="agent-col" aria-label="Agent">
-        <div class="ap-head"><span class="spark">✦</span> Agent <span class="model" id="ap-model"></span><button type="button" class="icon-btn" id="ap-close" title="Close panel">×</button></div>
+        <div class="ap-head"><span class="spark">✦</span> Agent <span class="model" id="ap-head-model"></span><button type="button" class="icon-btn" id="ap-close" title="Close panel">×</button></div>
         <div class="ap-thread" id="ap-thread"></div>
         <form class="composer" id="ap-form">
           <textarea id="ap-input" rows="3" placeholder="Ask the agent to change code, explain this file, or run platform agents…" aria-label="Message the agent"></textarea>
           <div class="comp-row">
             <span class="ctx-chip" id="ap-ctx" hidden><span id="ap-ctx-name"></span><button type="button" id="ap-ctx-x" title="Don't include this file">×</button></span>
             <span class="grow"></span>
+            <select class="sel" id="ap-model" aria-label="Model for this task"><option value="auto">Auto (MAESTRO routes)</option></select>
             <label class="check"><input type="checkbox" id="ap-auto"> Apply edits automatically</label>
             <button type="submit" class="btn primary" id="ap-send">Send</button>
           </div>
@@ -532,6 +596,7 @@ div.CodeMirror-cursors { visibility: hidden; position: relative; z-index: 3; }
           <h3>New agent task</h3>
           <textarea id="mg-input" rows="3" placeholder="e.g. Add a pollinatorIndex command to NATURA and register it in the router" aria-label="Task description"></textarea>
           <div class="comp-row">
+            <select class="sel" id="mg-model" aria-label="Model for this task"><option value="auto">Auto (MAESTRO routes)</option></select>
             <label class="check"><input type="checkbox" id="mg-auto"> Apply edits automatically</label>
             <span class="grow"></span>
             <button type="submit" class="btn primary">Start task</button>
@@ -546,6 +611,60 @@ div.CodeMirror-cursors { visibility: hidden; position: relative; z-index: 3; }
         <div class="task-rows" id="mg-rows"></div>
       </div>
       <div class="mg-detail" id="mg-detail"></div>
+    </section>
+
+    <!-- Models surface -->
+    <section class="surface s-models" id="s-models" data-surface="models" hidden>
+      <div class="mx">
+        <div class="demo-note" id="mx-demo" hidden>Example data. Start neural-link and add provider keys under Environment to route real requests.</div>
+        <section>
+          <h2>Routing policy</h2>
+          <p class="sub">MAESTRO, the conductor agent, picks a model for every request from the task type and this policy, then falls back to the next configured provider if a call fails or is declined.</p>
+          <div class="seg" role="group" aria-label="Routing policy" id="mx-policy">
+            <button type="button" data-pol="quality" aria-pressed="false">Quality</button>
+            <button type="button" data-pol="balanced" aria-pressed="false">Balanced</button>
+            <button type="button" data-pol="economy" aria-pressed="false">Economy</button>
+            <button type="button" data-pol="speed" aria-pressed="false">Speed</button>
+          </div>
+          <form class="route-try" id="mx-route-form"><input id="mx-route-in" placeholder="Try a prompt to see where it would go, e.g. refactor the scheduler" aria-label="Prompt to route"><button type="submit" class="btn">Route it</button></form>
+          <div class="route-out" id="mx-route-out"></div>
+        </section>
+        <section>
+          <h2>Agent models</h2>
+          <p class="sub">Give each LLM-powered agent a fixed model, or leave it on Auto so MAESTRO routes per request. Fixed models still fall back when their provider fails.</p>
+          <div class="assign" id="mx-assign"></div>
+        </section>
+        <section>
+          <h2>Providers</h2>
+          <p class="sub">Add a provider's key under Environment to enable it. Discover pulls the provider's current model list.</p>
+          <div class="prov-grid" id="mx-providers"></div>
+        </section>
+        <section>
+          <h2>Arena</h2>
+          <p class="sub">Send one prompt to several models at once. Council mode hides which model wrote which answer, has a judge model score them, and writes a combined final answer.</p>
+          <form class="arena-form" id="arena-form">
+            <textarea id="arena-in" rows="3" placeholder="e.g. Explain how monarch butterflies navigate during migration" aria-label="Arena prompt"></textarea>
+            <div class="pick" id="arena-pick"></div>
+            <div class="comp-row">
+              <div class="seg" role="group" aria-label="Arena mode" id="arena-mode"><button type="button" data-am="compare" aria-pressed="false">Compare</button><button type="button" data-am="council" aria-pressed="true">Council</button></div>
+              <label class="check">Judge <select class="sel" id="arena-judge" aria-label="Judge model"></select></label>
+              <span class="grow"></span>
+              <button type="submit" class="btn primary" id="arena-go">Run</button>
+            </div>
+          </form>
+          <div id="arena-out"></div>
+        </section>
+        <section>
+          <h2>Integrations</h2>
+          <p class="sub">LangSmith traces every agent run, model call and tool call. LangChain and other OpenAI-compatible clients use the router through the /v1 endpoint. Lindy agents call neural-link by webhook, and neural-link agents trigger Lindy workflows.</p>
+          <div class="integ" id="mx-integ"></div>
+        </section>
+        <section>
+          <h2>Usage by model</h2>
+          <p class="sub">Since the server started. Cost is shown where the provider's pricing is known.</p>
+          <div id="mx-stats"></div>
+        </section>
+      </div>
     </section>
 
     <!-- Deployments surface -->
@@ -627,6 +746,8 @@ const AGENTS = [
   { id: 'PLAT', role: 'PaaS', group: 'Cloud', color: '#9a6af0', run: 'dispatch PLAT deployApplication {"app":"api","version":"2.4.1"}' },
   { id: 'XAAS', role: 'XaaS orchestration', group: 'Cloud', color: '#f05a78', run: 'dispatch XAAS provisionTenant {"name":"Acme Corp","seats":5}' },
   { id: 'NATURA', role: 'Nature and life sciences', group: 'Science', color: '#4cc96a', run: 'natura how do monarch butterflies navigate during migration?' },
+  { id: 'MAESTRO', role: 'Conducts every LLM: routes, falls back, judges', group: 'Orchestration', color: '#ff9e64', run: 'ask which crops suit clay soil in north Texas?' },
+  { id: 'LINDY', role: 'Triggers Lindy.ai workflows', group: 'Integrations', color: '#7aa2ff', run: 'dispatch LINDY status' },
 ];
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -981,6 +1102,7 @@ function setSurface(name) {
   if (name === 'editor') { cm.refresh(); renderAgentPanel(); }
   if (name === 'manager') { renderManager(); refreshTasks(true); }
   if (name === 'deploy') { renderDeploys(); refreshDeploys(true); }
+  if (name === 'models') { renderModels(); loadLlm(); }
 }
 $$('.titlebar [data-surface]').forEach((b) => b.addEventListener('click', () => setSurface(b.dataset.surface)));
 
@@ -1042,11 +1164,11 @@ function renderTaskViews() {
   if (S.surface === 'manager') renderManager();
   renderTree();
 }
-async function startTask(prompt, autoApply, contextFile) {
+async function startTask(prompt, autoApply, contextFile, model = 'auto') {
   if (!prompt.trim()) { toast('Describe what the agent should do.', true); return null; }
   if (!needLive('Running an agent task')) return null;
   try {
-    const t = await api('/ide/api/tasks', { method: 'POST', body: { prompt, autoApply, contextFile } });
+    const t = await api('/ide/api/tasks', { method: 'POST', body: { prompt, autoApply, contextFile, model } });
     S.details.set(t.id, t); S.tasks.unshift({ ...t, edits: [] });
     renderTaskViews(); setTimeout(() => refreshTasks(true), 600);
     return t;
@@ -1085,7 +1207,7 @@ function planMini(t) {
 function renderAgentPanel() {
   const el = $('#ap-thread');
   const list = S.tasks.slice(0, 10).reverse().map((t) => S.details.get(t.id) || t);
-  $('#ap-model').textContent = list.length ? list[list.length - 1].model || '' : '';
+  $("#ap-head-model").textContent = list.length ? (list[list.length - 1].routedTo || list[list.length - 1].model || "") : "";
   if (!list.length) {
     el.innerHTML = `<div class="empty" style="padding:0">Ask the agent to change code, explain a file or run platform agents. It plans, reads the code, proposes edits, and typechecks. You review each edit as a diff before it is written.</div>`;
     return;
@@ -1119,7 +1241,7 @@ $('#ap-ctx-x').addEventListener('click', () => { S.includeCtx = false; renderCtx
 $('#ap-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const input = $('#ap-input');
-  const t = await startTask(input.value, $('#ap-auto').checked, S.includeCtx ? S.active : undefined);
+  const t = await startTask(input.value, $('#ap-auto').checked, S.includeCtx ? S.active : undefined, $('#ap-model').value);
   if (t) { input.value = ''; S.includeCtx = true; renderCtxChip(); }
 });
 $('#ap-input').addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); $('#ap-form').requestSubmit(); } });
@@ -1183,11 +1305,12 @@ function renderTaskDetail() {
   el.innerHTML = `
     ${t.example ? '<div class="callout">Example task. Start neural-link with <code>npm run dev</code> and open http://localhost:3001 to run real agents on your code.</div>' : ''}
     <h2>${esc(t.prompt)}</h2>
-    <div class="meta-row"><span class="pill ${t.status}">${taskStatusLabel(t)}</span><span>${esc(t.model)}</span><span>${secs(dur)}</span>
+    <div class="meta-row"><span class="pill ${t.status}">${taskStatusLabel(t)}</span><span title="${esc(t.routeReason || '')}">${esc(t.routedTo || t.model)}${t.model === 'auto' ? ' · auto' : ''}</span><span>${secs(dur)}</span>
       <span>${(t.tokens.input / 1000).toFixed(1)}k in · ${(t.tokens.output / 1000).toFixed(1)}k out</span>${t.contextFile ? `<span>@ src/${esc(t.contextFile)}</span>` : ''}<span>${t.autoApply ? 'auto-apply' : 'review edits'}</span>
       <span class="grow"></span>
       ${t.status === 'running' ? `<button type="button" class="btn danger" data-cancel="${esc(t.id)}">Stop task</button>` : `<button type="button" class="btn" data-del="${esc(t.id)}">Delete</button>`}</div>
     ${t.status === 'error' && t.error ? `<div class="callout err">${esc(t.error)}</div>` : ''}
+    ${t.routeReason ? `<p class="sub" style="margin:-8px 0 16px;font:11.5px/1.5 var(--font-code);color:var(--text-3)">MAESTRO: ${esc(t.routeReason)}</p>` : ''}
     ${t.plan.length ? `<div class="sec"><h3 class="sec-h">Plan <span style="color:var(--text-3);letter-spacing:0">${t.plan.filter((p) => p.done).length}/${t.plan.length}</span></h3><ul class="plan">${t.plan.map((p) => `<li class="${p.done ? 'on' : ''}"><span class="box">${p.done ? '✓' : ''}</span><span class="tx">${esc(p.text)}</span></li>`).join('')}</ul></div>` : ''}
     ${edits.length ? `<div class="sec"><h3 class="sec-h">Changes</h3>${edits.map((a) => { const s = diffStat(a); return `<div class="change"><div class="change-head"><span class="p">${a.isNew ? 'new · ' : ''}src/${esc(a.path)}</span><span class="stat-add">+${s.add}</span><span class="stat-del">−${s.del}</span><span class="pill ${a.state}">${a.state}</span><span class="grow"></span>
         ${a.state === 'pending' ? `<button type="button" class="btn danger" data-res="${esc(t.id)}|${esc(a.id)}|0">Reject</button><button type="button" class="btn accept" data-res="${esc(t.id)}|${esc(a.id)}|1">Accept</button>` : ''}
@@ -1207,7 +1330,7 @@ $('#mg-detail').addEventListener('click', async (e) => {
 $('#mg-filters').addEventListener('click', (e) => { const b = e.target.closest('[data-f]'); if (!b) return; S.taskFilter = b.dataset.f; $$('#mg-filters [data-f]').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); renderManager(); });
 $('#mg-form').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const t = await startTask($('#mg-input').value, $('#mg-auto').checked);
+  const t = await startTask($('#mg-input').value, $('#mg-auto').checked, undefined, $('#mg-model').value);
   if (t) { $('#mg-input').value = ''; S.selTask = t.id; renderManager(); }
 });
 $('#mg-input').addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); $('#mg-form').requestSubmit(); } });
@@ -1368,6 +1491,190 @@ $('#env-form').addEventListener('submit', async (e) => {
 });
 $('#refresh-env').addEventListener('click', loadEnv);
 
+/* ── Models, MAESTRO and integrations ── */
+const ROLES = { TON: 'Master orchestrator', BRAIN: 'Cognitive core', NATURA: 'Nature and science', GENESIS: 'Agent generator', IDE: 'IDE coding agent', JUDGE: 'Council judge' };
+S.llm = null; S.arenaMode = 'council'; S.arenaPicked = null; S.arenaResult = null;
+function exampleLlm() {
+  const mk = (id, label, configured, keyEnv, models, extra = {}) => ({ id, label, configured, keyEnv, disabled: false, local: false, models: models.map(([mid, l, tier, price]) => ({ id: mid, label: l, tier, price, spec: `${id}:${mid}` })), ...extra });
+  const providers = [
+    mk('anthropic', 'Anthropic Claude', true, 'ANTHROPIC_API_KEY', [['claude-opus-5-5', 'Claude Opus 5.5', 'frontier', { input: 4, output: 20 }], ['claude-sonnet-5-5', 'Claude Sonnet 5.5', 'balanced', { input: 2, output: 10 }], ['claude-haiku-5-5', 'Claude Haiku 5.5', 'fast', { input: 0.1, output: 0.5 }]]),
+    mk('openai', 'OpenAI', true, 'OPENAI_API_KEY', [['gpt-5', 'GPT-5', 'frontier'], ['gpt-5-mini', 'GPT-5 mini', 'balanced'], ['gpt-5-nano', 'GPT-5 nano', 'fast']]),
+    mk('google', 'Google Gemini', false, 'GEMINI_API_KEY', [['gemini-2.5-pro', 'Gemini 2.5 Pro', 'frontier'], ['gemini-2.5-flash', 'Gemini 2.5 Flash', 'balanced']]),
+    mk('xai', 'xAI Grok', false, 'XAI_API_KEY', [['grok-4', 'Grok 4', 'frontier']]),
+    mk('mistral', 'Mistral', false, 'MISTRAL_API_KEY', [['mistral-large-latest', 'Mistral Large', 'balanced']]),
+    mk('ollama', 'Ollama (local)', false, null, [['llama3.1', 'Llama 3.1 (local)', 'fast']], { local: true }),
+  ];
+  return {
+    example: true, providers,
+    available: providers.filter((p) => p.configured).flatMap((p) => p.models.map((m) => m.spec)),
+    settings: { policy: 'balanced', assignments: { TON: 'auto', BRAIN: 'anthropic:claude-opus-5-5', NATURA: 'auto', GENESIS: 'auto', IDE: 'auto', JUDGE: 'openai:gpt-5' }, disabled: [] },
+    stats: [
+      { spec: 'anthropic:claude-opus-5-5', calls: 42, failures: 1, inputTokens: 311000, outputTokens: 48200, costUsd: 2.208, p50LatencyMs: 6100 },
+      { spec: 'openai:gpt-5', calls: 17, failures: 0, inputTokens: 98000, outputTokens: 15100, costUsd: 0, p50LatencyMs: 4800 },
+      { spec: 'anthropic:claude-haiku-5-5', calls: 88, failures: 0, inputTokens: 120400, outputTokens: 21000, costUsd: 0.0225, p50LatencyMs: 900 },
+    ],
+    integrations: {
+      langsmith: { enabled: true, project: 'neural-link', sent: 1284, failed: 0, lastError: '' },
+      lindy: { outbound: true, inbound: false, inboundPath: '/integrations/lindy' },
+      langchain: { baseURL: 'http://localhost:3001/v1', auth: 'any non-empty API key (local only)' },
+    },
+  };
+}
+const EXAMPLE_ARENA = {
+  example: true, prompt: 'How do monarch butterflies navigate during migration?',
+  answers: [
+    { spec: 'anthropic:claude-opus-5-5', ok: true, latencyMs: 5200, usage: { input: 24, output: 310 }, costUsd: 0.0063, text: 'Monarchs use a time-compensated sun compass: antennal circadian clocks correct for the sun moving across the sky. On overcast days they also read the Earth\'s magnetic inclination, and they fly south-west toward oyamel fir forests in central Mexico.' },
+    { spec: 'openai:gpt-5', ok: true, latencyMs: 4100, usage: { input: 24, output: 220 }, costUsd: null, text: 'They mainly use the sun as a compass, adjusted by an internal clock, and a magnetic sense as backup.' },
+  ],
+  verdict: { judge: 'openai:gpt-5', winner: 'anthropic:claude-opus-5-5', scores: [{ spec: 'anthropic:claude-opus-5-5', score: 9, strengths: 'Explains the clock correction and destination', weaknesses: 'Slightly long' }, { spec: 'openai:gpt-5', score: 7, strengths: 'Accurate and short', weaknesses: 'No mechanism detail' }], synthesis: 'Monarchs steer with a sun compass that their antennal circadian clock corrects through the day, back it up with a magnetic inclination sense under clouds, and head south-west to oyamel fir forests in central Mexico.' },
+};
+async function loadLlm() {
+  if (S.live) { try { S.llm = await api('/ide/api/llm'); } catch (e) { toast('Could not load models: ' + e.message, true); } }
+  else { S.llm = exampleLlm(); if (!S.arenaResult) S.arenaResult = EXAMPLE_ARENA; }
+  fillModelSelects();
+  if (S.surface === 'models') renderModels();
+  return S.llm;
+}
+function modelOptions(selected, { auto = true } = {}) {
+  const l = S.llm; if (!l) return auto ? '<option value="auto">Auto (MAESTRO routes)</option>' : '';
+  const avail = new Set(l.available);
+  const groups = l.providers.map((p) => {
+    const opts = p.models.filter((m) => avail.has(m.spec) || m.spec === selected).map((m) => `<option value="${esc(m.spec)}"${m.spec === selected ? ' selected' : ''}>${esc(m.label)}${avail.has(m.spec) ? '' : ' (not configured)'}</option>`).join('');
+    return opts ? `<optgroup label="${esc(p.label)}">${opts}</optgroup>` : '';
+  }).join('');
+  return (auto ? `<option value="auto"${selected === 'auto' ? ' selected' : ''}>Auto (MAESTRO routes)</option>` : '') + groups;
+}
+function fillModelSelects() {
+  for (const id of ['#ap-model', '#mg-model']) { const el = $(id); const v = el.value || 'auto'; el.innerHTML = modelOptions(v); el.value = [...el.options].some((o) => o.value === v) ? v : 'auto'; }
+}
+function renderModels() {
+  const l = S.llm; if (!l) return;
+  $('#mx-demo').hidden = !l.example;
+  $$('#mx-policy [data-pol]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.pol === l.settings.policy)));
+  $('#mx-assign').innerHTML = Object.keys(ROLES).map((a) => `<div class="assign-row"><div><div class="nm">${a}</div><div class="rl">${ROLES[a]}</div></div><select class="sel" data-assign="${a}" aria-label="Model for ${a}">${modelOptions(l.settings.assignments[a] || 'auto')}</select></div>`).join('');
+  $('#mx-providers').innerHTML = l.providers.map((p) => {
+    const state = p.disabled ? ['cancelled', 'disabled'] : p.configured ? ['ready', 'connected'] : p.local ? ['stopped', 'not running'] : ['pending', 'needs key'];
+    return `<div class="prov${p.configured && !p.disabled ? '' : ' dim'}"><div class="prov-h"><b>${esc(p.label)}</b><span class="pill ${state[0]}">${state[1]}</span></div>
+      <div class="key">${p.local ? 'Runs on this machine · OLLAMA_BASE_URL' : esc(p.keyEnv || '')}</div>
+      <div class="mchips">${p.models.map((m) => `<span class="mchip ${m.tier}" title="${m.price ? `$${m.price.input} / $${m.price.output} per million tokens` : 'pricing not tracked'}">${esc(m.id)}<span class="t">${m.tier}</span></span>`).join('')}</div>
+      <div class="acts">${!p.configured && p.keyEnv ? `<button type="button" class="mini" data-addkey="${esc(p.keyEnv)}">Add key</button>` : ''}${p.configured ? `<button type="button" class="mini" data-discover="${esc(p.id)}">Discover models</button>` : ''}<button type="button" class="mini" data-toggle="${esc(p.id)}">${p.disabled ? 'Enable' : 'Disable'}</button></div></div>`;
+  }).join('');
+  const picked = S.arenaPicked ?? new Set(l.available.filter((spec, i, arr) => arr.findIndex((x) => x.split(':')[0] === spec.split(':')[0]) === i).slice(0, 3));
+  S.arenaPicked = picked;
+  $('#arena-pick').innerHTML = l.available.length ? l.available.map((spec) => `<label><input type="checkbox" value="${esc(spec)}"${picked.has(spec) ? ' checked' : ''}><span>${esc(spec)}</span></label>`).join('') : '<span class="empty" style="padding:0">No models available yet. Add a provider key first.</span>';
+  $('#arena-judge').innerHTML = modelOptions(l.settings.assignments.JUDGE || 'auto');
+  $$('#arena-mode [data-am]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.am === S.arenaMode)));
+  $('#arena-judge').closest('label').hidden = S.arenaMode !== 'council';
+  renderArena();
+  const ig = l.integrations || {};
+  const ls = ig.langsmith || {}, ld = ig.lindy || {}, lc = ig.langchain || {};
+  const base = lc.baseURL || 'http://localhost:3001/v1';
+  const origin = S.base || (/^https?:$/.test(location.protocol) ? location.origin : 'http://localhost:3001');
+  $('#mx-integ').innerHTML = `
+    <div class="card"><h3>LangSmith <span class="pill ${ls.enabled ? 'ready' : 'pending'}">${ls.enabled ? 'tracing' : 'needs key'}</span></h3>
+      <p>Every agent run, LLM call and tool call is sent as a nested trace, with token usage.</p>
+      <div class="kv"><span>Project</span><span>${esc(ls.project || 'neural-link')}</span><span>Sent</span><span>${ls.sent ?? 0} runs${ls.failed ? ` · ${ls.failed} failed` : ''}</span>${ls.lastError ? `<span>Last error</span><span style="color:#ffb3b9">${esc(ls.lastError)}</span>` : ''}<span>Keys</span><span>LANGSMITH_API_KEY, LANGSMITH_PROJECT</span></div>
+      <div class="row-acts">${ls.enabled ? '<button type="button" class="mini" data-test="langsmith">Send test trace</button>' : '<button type="button" class="mini" data-addkey="LANGSMITH_API_KEY">Add key</button>'}<a class="mini" href="https://smith.langchain.com" target="_blank" rel="noopener">Open LangSmith ↗</a></div></div>
+    <div class="card"><h3>LangChain <span class="pill ready">ready</span></h3>
+      <p>Point ChatOpenAI at the gateway. Use model <code>auto</code>, <code>auto:speed</code>, or any provider:model.</p>
+      <pre>import { ChatOpenAI } from '@langchain/openai';
+
+const llm = new ChatOpenAI({
+  model: 'auto',
+  apiKey: process.env.NEURAL_API_KEY ?? 'local',
+  configuration: { baseURL: '${esc(base)}' },
+});
+await llm.invoke('Plan a pollinator garden');</pre>
+      <pre># Python
+from langchain_openai import ChatOpenAI
+llm = ChatOpenAI(model="auto", api_key="local",
+                 base_url="${esc(base)}")</pre>
+      <div class="kv"><span>Auth</span><span>${esc(lc.auth || '')}</span></div></div>
+    <div class="card"><h3>Lindy.ai <span class="pill ${ld.outbound || ld.inbound ? 'ready' : 'pending'}">${ld.outbound && ld.inbound ? 'two-way' : ld.outbound ? 'outbound' : ld.inbound ? 'inbound' : 'not set up'}</span></h3>
+      <p>Neural-link agents and the IDE agent can trigger a Lindy workflow, and Lindy can run any neural-link agent.</p>
+      <div class="kv"><span>Trigger Lindy</span><span>${ld.outbound ? 'LINDY_WEBHOOK_URL set' : 'add LINDY_WEBHOOK_URL (and LINDY_WEBHOOK_SECRET)'}</span><span>Lindy → here</span><span>${ld.inbound ? `POST ${esc(origin)}${esc(ld.inboundPath || '/integrations/lindy')}` : 'add LINDY_INBOUND_SECRET'}</span></div>
+      <pre>// Lindy "HTTP Request" action
+POST ${esc(origin)}/integrations/lindy
+Authorization: Bearer &lt;LINDY_INBOUND_SECRET&gt;
+{ "message": "Find FSBO leads in Austin" }
+// or { "agentId": "NATURA", "command": "query",
+//      "params": { "message": "..." } }</pre>
+      <div class="row-acts">${ld.outbound ? '<button type="button" class="mini" data-test="lindy">Send test event</button>' : '<button type="button" class="mini" data-addkey="LINDY_WEBHOOK_URL">Add webhook URL</button>'}${ld.inbound ? '' : '<button type="button" class="mini" data-addkey="LINDY_INBOUND_SECRET">Add inbound secret</button>'}</div></div>`;
+  const st = l.stats || [];
+  $('#mx-stats').innerHTML = st.length ? `<div class="tbl-wrap"><table class="stats"><thead><tr><th>Model</th><th>Calls</th><th>Failures</th><th>Input tokens</th><th>Output tokens</th><th>Cost</th><th>p50 latency</th></tr></thead><tbody>${st.map((x) => `<tr><td>${esc(x.spec)}</td><td>${x.calls}</td><td style="${x.failures ? 'color:var(--warn)' : ''}" title="${esc(x.lastError || '')}">${x.failures}</td><td>${x.inputTokens.toLocaleString()}</td><td>${x.outputTokens.toLocaleString()}</td><td>${x.costUsd ? '$' + x.costUsd.toFixed(4) : '—'}</td><td>${x.p50LatencyMs != null ? secs(x.p50LatencyMs) : '—'}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty" style="padding:0">No model calls yet.</div>';
+}
+function renderArena() {
+  const r = S.arenaResult, el = $('#arena-out');
+  if (!r) { el.innerHTML = ''; return; }
+  if (r.running) { el.innerHTML = `<div class="route-out">Asking ${r.count} model${r.count > 1 ? 's' : ''}${S.arenaMode === 'council' ? ', then the judge' : ''}…</div>`; return; }
+  const v = r.verdict;
+  const score = (spec) => v?.scores?.find((x) => x.spec === spec);
+  el.innerHTML = `${r.example ? '<div class="route-out" style="color:#c9a6ff">Example result</div>' : ''}
+    ${v ? `<div class="verdict"><div class="m">Judge ${esc(v.judge)}${v.winner ? ` · best answer: ${esc(v.winner)}` : ''}</div><div class="tx">${esc(v.synthesis)}</div></div>` : r.judgeError ? `<div class="callout err" style="margin-top:12px">${esc(r.judgeError)}</div>` : ''}
+    <div class="arena-res">${(r.answers || []).map((a) => { const sc = score(a.spec); return `<div class="ans${v?.winner === a.spec ? ' win' : ''}">
+      <div class="h"><span>${esc(a.spec)}</span>${sc ? `<span>${sc.score}/10</span>` : ''}</div>
+      ${sc ? `<div class="scorebar"><i style="width:${Math.max(0, Math.min(10, sc.score)) * 10}%"></i></div>` : ''}
+      <div class="m">${secs(a.latencyMs)}${a.usage ? ` · ${a.usage.input + a.usage.output} tokens` : ''}${a.costUsd ? ` · $${a.costUsd.toFixed(4)}` : ''}</div>
+      ${a.ok ? `<div class="tx">${esc(a.text)}</div>` : `<div class="err">${esc(a.error)}</div>`}
+      ${sc ? `<div class="m">+ ${esc(sc.strengths)}${sc.weaknesses ? ` · − ${esc(sc.weaknesses)}` : ''}</div>` : ''}</div>`; }).join('')}</div>`;
+}
+$('#mx-policy').addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-pol]'); if (!b) return;
+  if (!needLive('Changing the routing policy')) return;
+  try { await api('/ide/api/llm/settings', { method: 'PUT', body: { policy: b.dataset.pol } }); toast(`Routing policy: ${b.dataset.pol}`); await loadLlm(); } catch (err) { toast(err.message, true); }
+});
+$('#mx-route-form').addEventListener('submit', async (e) => {
+  e.preventDefault(); const prompt = $('#mx-route-in').value.trim(); if (!prompt) return;
+  const out = $('#mx-route-out');
+  if (!S.live) { out.innerHTML = 'Example: a <b>code</b> task under the balanced policy goes to <b>anthropic:claude-opus-5-5</b>, with fallbacks openai:gpt-5, anthropic:claude-sonnet-5-5.'; return; }
+  try { const d = await api('/ide/api/llm/route', { method: 'POST', body: { prompt } }); out.innerHTML = `→ <b>${esc(d.spec)}</b> · ${esc(d.taskType)} · ${esc(d.tier)}<br>${esc(d.reason)}`; }
+  catch (err) { out.textContent = err.message; }
+});
+$('#mx-assign').addEventListener('change', async (e) => {
+  const sel = e.target.closest('[data-assign]'); if (!sel) return;
+  if (!needLive('Assigning models')) { renderModels(); return; }
+  try { await api('/ide/api/llm/settings', { method: 'PUT', body: { assignments: { [sel.dataset.assign]: sel.value } } }); toast(`${sel.dataset.assign} → ${sel.value === 'auto' ? 'Auto' : sel.value}`); await loadLlm(); } catch (err) { toast(err.message, true); }
+});
+$('#mx-providers').addEventListener('click', async (e) => {
+  const add = e.target.closest('[data-addkey]'); if (add) { openEnvFor(add.dataset.addkey); return; }
+  const dis = e.target.closest('[data-discover]');
+  const tog = e.target.closest('[data-toggle]');
+  if (!dis && !tog) return;
+  if (!needLive('Managing providers')) return;
+  try {
+    if (dis) { dis.disabled = true; const r = await api('/ide/api/llm/discover', { method: 'POST', body: { provider: dis.dataset.discover } }); toast(r.added.length ? `Added ${r.added.length} model${r.added.length > 1 ? 's' : ''} from ${r.provider}` : `${r.provider}: no new models`); }
+    else { const cur = new Set(S.llm.settings.disabled || []); cur.has(tog.dataset.toggle) ? cur.delete(tog.dataset.toggle) : cur.add(tog.dataset.toggle); await api('/ide/api/llm/settings', { method: 'PUT', body: { disabled: [...cur] } }); }
+    await loadLlm();
+  } catch (err) { toast(err.message, true); if (dis) dis.disabled = false; }
+});
+$('#mx-integ').addEventListener('click', async (e) => {
+  const add = e.target.closest('[data-addkey]'); if (add) { openEnvFor(add.dataset.addkey); return; }
+  const t = e.target.closest('[data-test]'); if (!t) return;
+  if (!needLive('Testing integrations')) return;
+  t.disabled = true;
+  try { const r = await api(`/ide/api/integrations/${t.dataset.test}/test`, { method: 'POST', body: {} }); toast(t.dataset.test === 'langsmith' ? `Test trace sent to ${r.project}` : `Lindy replied ${r.status}`); await loadLlm(); }
+  catch (err) { toast(err.message, true); }
+  t.disabled = false;
+});
+function openEnvFor(key) { showView('env'); $('#env-key').value = key; $('#env-val').value = ''; $('#env-val').focus(); }
+$('#arena-pick').addEventListener('change', (e) => { const c = e.target; if (c.type !== 'checkbox') return; c.checked ? S.arenaPicked.add(c.value) : S.arenaPicked.delete(c.value); });
+$('#arena-mode').addEventListener('click', (e) => { const b = e.target.closest('[data-am]'); if (!b) return; S.arenaMode = b.dataset.am; renderModels(); });
+$('#arena-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const prompt = $('#arena-in').value.trim(); const models = [...(S.arenaPicked || [])];
+  if (!prompt) { toast('Write a prompt for the arena.', true); return; }
+  if (!models.length) { toast('Pick at least one model.', true); return; }
+  if (!needLive('Running the arena')) return;
+  S.arenaResult = { running: true, count: models.length }; renderArena(); $('#arena-go').disabled = true;
+  try {
+    S.arenaResult = S.arenaMode === 'council'
+      ? await api('/ide/api/llm/council', { method: 'POST', body: { prompt, models, judge: $('#arena-judge').value === 'auto' ? undefined : $('#arena-judge').value } })
+      : { answers: await api('/ide/api/llm/compare', { method: 'POST', body: { prompt, models } }) };
+  } catch (err) { S.arenaResult = { answers: [], judgeError: err.message }; }
+  $('#arena-go').disabled = false; renderArena(); loadLlm();
+});
+$('#arena-in').addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); $('#arena-form').requestSubmit(); } });
+
 /* ── Panel ── */
 function showPanel(name) {
   $('#main').classList.remove('panel-hidden');
@@ -1394,6 +1701,8 @@ function log(text, cls = '') { const d = document.createElement('div'); d.classN
 const logJSON = (o) => log(typeof o === 'string' ? o : JSON.stringify(o, null, 2));
 const HELP = [
   ['task <prompt>', 'Start a coding agent task (shows in Agent Manager)'],
+  ['ask <prompt>', 'MAESTRO routes the question to the best configured LLM'],
+  ['models', 'List the models you can use'],
   ['deploy [local|netlify|vercel] [--prod]', 'Create a deployment'],
   ['ton <message>', 'TON orchestrates across platform agents'],
   ['stream <message>', 'Same as ton, streamed with live tool calls'],
@@ -1439,6 +1748,15 @@ async function exec(line) {
   if (c === 'build') { await runBuild(); showPanel('terminal'); return; }
   if (c === 'open') { await openFile(arg.replace(/^src\//, '')); return; }
   if (c === 'agents') { AGENTS.forEach((a) => log(`${a.id.padEnd(8)} ${a.role}`)); return; }
+  if (c === 'models') { const l = S.llm || await loadLlm(); (l?.available || []).forEach((m) => log(m)); if (!l?.available?.length) log('No providers configured. Open Models.', 'warn'); return; }
+  if (c === 'ask' && S.live) {
+    if (!arg) { log('A question is required.', 'err'); return; }
+    const t = log('MAESTRO is routing…', 'dim');
+    try { const r = await api('/dispatch', { method: 'POST', body: { agentId: 'MAESTRO', command: 'ask', params: { prompt: arg } } }); t.remove();
+      const x = r.result || {}; (x.attempts || []).filter((a) => !a.ok).forEach((a) => log(`fell back from ${a.spec}: ${a.error}`, 'warn'));
+      log(`${x.model} · ${x.latencyMs}ms`, 'ok'); log(x.answer || r.error || ''); } catch (e) { t.remove(); log(e.message, 'err'); }
+    return;
+  }
   if (c === 'task') { const t = await startTask(arg, false); if (t) log(`started ${t.id} · follow it in Agent Manager`, 'ok'); return; }
   if (c === 'deploy') { const pv = ['local', 'netlify', 'vercel'].find((p) => arg.includes(p)) || 'local'; await deploy(pv, /--prod|production/.test(arg) ? 'production' : 'preview'); return; }
   if (!S.live) { log('[demo] neural-link is not reachable from this page.', 'warn'); log('Run it locally, then open http://localhost:3001:', 'dim'); log('  cd welloff-neural-link && npm run dev', 'acc'); return; }
@@ -1511,6 +1829,7 @@ function openPalette(mode = 'files') {
     { label: 'Ask the agent', k: 'Ctrl L', run: () => { setSurface('editor'); setAgentPanel(true); } },
     { label: 'Open Agent Manager', k: 'Ctrl E', run: () => setSurface('manager') },
     { label: 'Open Deployments', k: '', run: () => setSurface('deploy') },
+    { label: 'Open Models and integrations', k: '', run: () => setSurface('models') },
     { label: 'Deploy preview (local)', k: '', run: () => deploy('local', 'preview') },
     { label: 'Deploy to production (local)', k: '', run: () => deploy('local', 'production') },
     { label: 'Deploy to Netlify', k: '', run: () => deploy('netlify', 'preview') },
@@ -1584,7 +1903,7 @@ async function boot() {
   const live = await connect();
   S.tasks = []; S.details.clear(); S.deploys = []; S.depDetail = null; S.selDep = null; S.selTask = null;
   await loadTree(); renderAgents();
-  await Promise.all([refreshTasks(true), refreshDeploys(true)]);
+  await Promise.all([refreshTasks(true), refreshDeploys(true), loadLlm()]);
   if (!out.childElementCount) {
     log('Neural Link IDE · agent-first editor with deployments · type help', 'acc');
     log(live ? `connected to ${S.base || location.host}` : 'neural-link is not running, so you are looking at a source snapshot and example tasks and deployments.', live ? 'ok' : 'warn');

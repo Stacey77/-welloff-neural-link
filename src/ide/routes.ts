@@ -2,6 +2,10 @@ import { Router, type Request, type Response, type NextFunction } from 'express'
 import { apiKeyAuth } from '../middleware/auth.js';
 import { listTree, readSrc, writeSrc, runTypecheck } from './workspace.js';
 import { listEnv, setEnv, deleteEnv } from './env.js';
+import { describe, discover, route as routeLlm, compare, council } from '../llm/index.js';
+import { updateSettings } from '../llm/settings.js';
+import { langsmithStatus, traced } from '../integrations/langsmith.js';
+import { lindyStatus, trigger as triggerLindy } from '../integrations/lindy.js';
 import { createTask, listTasks, getTask, cancelTask, resolveEdit, deleteTask } from './tasks.js';
 import {
   createDeployment, listDeployments, getDeployment, promote, restart, stop, remove, providerStatus, productionUrl,
@@ -73,8 +77,8 @@ ideRouter.delete('/env/:key', h((req) => {
 
 ideRouter.get('/tasks', h(() => listTasks()));
 ideRouter.post('/tasks', h((req) => {
-  const { prompt, contextFile, autoApply } = req.body ?? {};
-  return createTask(String(prompt ?? ''), { contextFile, autoApply });
+  const { prompt, contextFile, autoApply, model } = req.body ?? {};
+  return createTask(String(prompt ?? ''), { contextFile, autoApply, model });
 }));
 ideRouter.get('/tasks/:id', h((req) => {
   const t = getTask(req.params.id);
@@ -103,3 +107,28 @@ ideRouter.post('/deployments/:id/promote', h((req) => promote(req.params.id)));
 ideRouter.post('/deployments/:id/restart', h((req) => restart(req.params.id)));
 ideRouter.post('/deployments/:id/stop', h((req) => stop(req.params.id)));
 ideRouter.delete('/deployments/:id', h((req) => { remove(req.params.id); return { deleted: true }; }));
+
+function integrations(port: string) {
+  return {
+    langsmith: langsmithStatus(),
+    lindy: lindyStatus(),
+    langchain: { baseURL: `http://localhost:${port}/v1`, models: '/v1/models', auth: process.env.NEURAL_API_KEY ? 'NEURAL_API_KEY as the API key' : 'any non-empty API key (local only)' },
+  };
+}
+
+ideRouter.get('/llm', h(async (req) => ({ ...(await describe()), integrations: integrations(String(req.socket.localPort)) })));
+ideRouter.put('/llm/settings', h((req) => updateSettings(req.body ?? {})));
+ideRouter.post('/llm/discover', h((req) => discover(String(req.body?.provider ?? ''))));
+ideRouter.post('/llm/route', h((req) => routeLlm(String(req.body?.prompt ?? ''), { policy: req.body?.policy })));
+ideRouter.post('/llm/compare', h((req) => compare(String(req.body?.prompt ?? ''), Array.isArray(req.body?.models) ? req.body.models.map(String) : [])));
+ideRouter.post('/llm/council', h((req) => council(String(req.body?.prompt ?? ''), Array.isArray(req.body?.models) ? req.body.models.map(String) : [], req.body?.judge ? String(req.body.judge) : undefined)));
+ideRouter.post('/integrations/langsmith/test', h(async () => {
+  if (!langsmithStatus().enabled) throw new Error('Add LANGSMITH_API_KEY under Environment first.');
+  const before = langsmithStatus().sent;
+  await traced('neural-link connection test', 'chain', { check: 'ping' }, async () => ({ ok: true }));
+  await new Promise((r) => setTimeout(r, 1_500));
+  const s = langsmithStatus();
+  if (s.sent <= before) throw new Error(s.lastError || 'LangSmith did not accept the test run.');
+  return { ok: true, project: s.project };
+}));
+ideRouter.post('/integrations/lindy/test', h(() => triggerLindy({ event: 'test', message: 'Connection test from Neural Link IDE' })));
