@@ -59,3 +59,9 @@ AXIOM turns a plain-language goal into an architecture plan, a 16-node swarm siz
 - **Harness**: TON, BRAIN, the streaming endpoint and the IDE agent share one loop with per-agent limits on steps, tokens, cost and tool time, schema validation of tool inputs, and detection of repeated identical calls.
 - **Context engineering**: each step records what fills the context window (system, tools, history, tool results). Oversized tool results are clipped, and long runs are compacted into a fresh transcript built from a summary, so no provider is sent an edited history.
 - **Evals**: suites in `evals/*.json` run cases against several models or agents with exact checks and an LLM judge. Run them in the IDE's Harness screen.
+
+## Jobs: automatic dispatch to agents and subagents
+
+Give TON a job in the IDE's **Jobs** screen, with `job <description>` in the terminal, `TON.job` via `/dispatch`, or `POST /jobs` with `Authorization: Bearer <JOBS_WEBHOOK_SECRET>`. TON plans it from a capability registry of every agent (or by keyword when no model is configured), runs the tasks in dependency order and in parallel where possible, and spawns general subagents for research and drafting. Each task reports to TON over the A2A bus (`job.report`), and TON writes the final report, which also arrives as an EVE notification.
+
+Commands that spend money, deploy, send messages or change records wait for approval unless the job allows them. Jobs start on their own from triggers (serious security incidents, engineering telemetry failures, prospect replies, bookings, deadlines due tomorrow, and scheduled scans), each of which can be turned off or set to wait for you. Automatic jobs are de-duplicated for 30 minutes and limited to 20 per hour (`NL_MAX_AUTO_JOBS_PER_HOUR`).

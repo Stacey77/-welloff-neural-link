@@ -2,6 +2,7 @@ import type { AgentCommand } from '../types/index.js';
 import { platformTools, runPlatformTool } from '../tools/access.js';
 import { LlmSession, type ToolSpec } from '../llm/index.js';
 import { runLoop } from '../harness/loop.js';
+import { createJob, getJob } from '../orchestrator/jobs.js';
 
 export const SYSTEM = `You are TON (Total Operations Navigator), the master orchestrator AI for the WellOff universal agent platform.
 You coordinate 21 specialized agents by calling their MCP tools directly:
@@ -46,6 +47,11 @@ COGNITIVE CORE:
 Find tools with search_tools and call them with call_tool (or, when available, run_code to chain several calls and return only the result). Check list_skills for written procedures that match the task. Use the available tools to fulfill the user's request. Call multiple tools across agents if needed. Return a concise summary of what was accomplished.`;
 
 export async function handle(command: AgentCommand): Promise<unknown> {
+  if (command.command === 'job') {
+    const j = createJob(String(command.params?.message ?? command.params?.input ?? ''), { source: { type: 'manual', name: 'TON.job' }, autoApprove: false });
+    return { orchestratedBy: 'TON', jobId: j.id, status: j.status, note: 'The job runs in the background; agents report back to TON. Check it in the IDE Jobs screen or with nl job <id>.' };
+  }
+  if (command.command === 'jobStatus') return getJob(String(command.params?.id ?? '')) ?? { error: 'Job not found' };
   const userMessage =
     typeof command.params?.message === 'string' ? command.params.message : command.command;
 

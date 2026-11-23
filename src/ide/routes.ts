@@ -10,6 +10,7 @@ import { securityRouter } from '../security/routes.js';
 import { assistantRouter } from '../assistant/index.js';
 import { engineeringRouter } from '../engineering/index.js';
 import { harnessRouter } from '../harness/routes.js';
+import { jobsRouter } from '../orchestrator/routes.js';
 import { createTask, listTasks, getTask, cancelTask, resolveEdit, deleteTask } from './tasks.js';
 import {
   createDeployment, listDeployments, getDeployment, promote, restart, stop, remove, providerStatus, productionUrl,
@@ -60,6 +61,7 @@ ideRouter.use('/security', securityRouter);
 ideRouter.use('/assistant', assistantRouter);
 ideRouter.use('/engineering', engineeringRouter);
 ideRouter.use('/harness', harnessRouter);
+ideRouter.use('/jobs', jobsRouter);
 
 ideRouter.get('/fs/tree', h(() => ({ root: 'src', tree: listTree() })));
 ideRouter.get('/fs/file', h((req) => ({ path: req.query.path, content: readSrc(String(req.query.path ?? '')) })));

@@ -5,7 +5,7 @@ import { PROVIDERS, splitSpec, type ModelInfo, type Tier } from './catalog.js';
 export type Policy = 'quality' | 'balanced' | 'economy' | 'speed';
 
 // Agents whose model can be assigned. 'auto' lets MAESTRO route per request.
-export const ASSIGNABLE = ['TON', 'BRAIN', 'NATURA', 'GENESIS', 'IDE', 'JUDGE', 'AXIOM', 'EVE', 'SECURITY'] as const;
+export const ASSIGNABLE = ['TON', 'BRAIN', 'NATURA', 'GENESIS', 'IDE', 'JUDGE', 'AXIOM', 'EVE', 'SECURITY', 'SUBAGENT'] as const;
 export type Assignable = (typeof ASSIGNABLE)[number];
 
 export interface LlmSettings {
@@ -24,7 +24,7 @@ function defaults(): LlmSettings {
     policy: (POLICIES as string[]).includes(process.env.LLM_POLICY ?? '') ? (process.env.LLM_POLICY as Policy) : 'balanced',
     providerOrder: PROVIDERS.map((p) => p.id),
     disabled: [],
-    assignments: { TON: 'auto', BRAIN: 'auto', NATURA: 'auto', GENESIS: 'auto', IDE: process.env.IDE_AGENT_MODEL ? `anthropic:${process.env.IDE_AGENT_MODEL}` : 'auto', JUDGE: 'auto', AXIOM: 'auto', EVE: 'auto', SECURITY: 'auto' },
+    assignments: { TON: 'auto', BRAIN: 'auto', NATURA: 'auto', GENESIS: 'auto', IDE: process.env.IDE_AGENT_MODEL ? `anthropic:${process.env.IDE_AGENT_MODEL}` : 'auto', JUDGE: 'auto', AXIOM: 'auto', EVE: 'auto', SECURITY: 'auto', SUBAGENT: 'auto' },
     discovered: {},
   };
 }

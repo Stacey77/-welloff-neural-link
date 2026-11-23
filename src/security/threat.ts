@@ -73,6 +73,12 @@ async function notify(inc: Incident): Promise<void> {
   }
 }
 
+const incidentListeners = new Set<(inc: Incident) => void>();
+export function onIncident(fn: (inc: Incident) => void): () => void {
+  incidentListeners.add(fn);
+  return () => incidentListeners.delete(fn);
+}
+
 let running: Promise<unknown> | null = null;
 
 export async function review(opts: { triage?: boolean } = {}): Promise<{ opened: number; updated: number }> {
@@ -113,6 +119,7 @@ export async function review(opts: { triage?: boolean } = {}): Promise<{ opened:
       }
     }
     for (const [inc, evs] of toTriage) { await triage(inc, evs); await notify(inc); }
+    for (const [inc] of toTriage) for (const fn of incidentListeners) { try { fn(inc); } catch { /* listeners never block review */ } }
     state.lastReviewAt = now;
     state.lastRunAt = now;
     state.incidents = state.incidents.slice(0, 500);

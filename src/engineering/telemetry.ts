@@ -48,8 +48,15 @@ export class TelemetryHub {
     return () => { set!.delete(fn); if (!set!.size) this.subs.delete(projectId); };
   }
 
+  private allSubs = new Set<(e: TelemetryEvent) => void>();
+
+  subscribeAll(fn: (e: TelemetryEvent) => void): () => void {
+    this.allSubs.add(fn);
+    return () => { this.allSubs.delete(fn); };
+  }
+
   private emit(e: TelemetryEvent): void {
-    for (const fn of this.subs.get(e.projectId) ?? []) {
+    for (const fn of [...(this.subs.get(e.projectId) ?? []), ...this.allSubs]) {
       try { fn(e); } catch { /* a failing subscriber must not stop the stream */ }
     }
   }

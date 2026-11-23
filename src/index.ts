@@ -25,6 +25,8 @@ import { gatewayRouter } from './integrations/openai-gateway.js';
 import { lindyRouter } from './integrations/lindy.js';
 import { startThreatResponse } from './security/threat.js';
 import { assistantWebhookRouter, startWatch } from './assistant/index.js';
+import { jobsWebhookRouter } from './orchestrator/routes.js';
+import { startTriggers } from './orchestrator/triggers.js';
 
 const PORT = parseInt(process.env.PORT ?? '3001', 10);
 const AGENTS = [
@@ -196,6 +198,7 @@ app.use('/ide/api', ideRouter);
 app.use('/v1', gatewayRouter);
 app.use('/integrations/lindy', lindyRouter);
 app.use('/assistant', assistantWebhookRouter);
+app.use('/jobs', jobsWebhookRouter);
 function sendPage(file: string) {
   return (_req: express.Request, res: express.Response) => {
     res.type('html').send(wrapPage(readFileSync(join(__dirname, '..', file), 'utf8')));
@@ -217,6 +220,7 @@ server.listen(PORT, () => {
     initDeployments();
     startThreatResponse();
     startWatch();
+    startTriggers();
     console.log(`IDE: http://localhost:${PORT}`);
   }
 });
