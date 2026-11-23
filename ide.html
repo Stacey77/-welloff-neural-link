@@ -273,6 +273,82 @@ kbd { font: 11px var(--font-code); background: var(--ink-3); border: 1px solid v
 .callout.err { border-color: rgba(240, 97, 109, .35); background: rgba(240, 97, 109, .07); color: #ffc4c9; }
 
 /* Deployments */
+/* Security, EVE and Engineering surfaces */
+.titlebar .seg { overflow-x: auto; scrollbar-width: none; max-width: 100%; flex-shrink: 1; min-width: 0; }
+.s-sec { display: grid; grid-template-columns: 200px minmax(0, 1fr); }
+.subnav { border-right: 1px solid var(--line); background: var(--ink-2); padding: 10px 6px; display: flex; flex-direction: column; gap: 1px; overflow: auto; min-width: 0; }
+.subnav button { background: none; border: 0; border-radius: 6px; text-align: left; padding: 7px 10px; color: var(--text-2); font-size: 12.5px; display: flex; justify-content: space-between; align-items: center; gap: 6px; min-width: 0; }
+.subnav button:hover { background: var(--ink-3); color: var(--text); }
+.subnav button[aria-pressed="true"] { background: rgba(56, 200, 240, .1); color: var(--text); box-shadow: inset 2px 0 0 var(--signal); }
+.n { font: 10px var(--font-code); padding: 0 5px; border-radius: 8px; background: rgba(240, 97, 109, .18); color: var(--err); }
+.sec-body { overflow: auto; min-width: 0; }
+.pane { max-width: 1120px; margin: 0 auto; padding: 18px 22px 40px; display: flex; flex-direction: column; gap: 22px; }
+.pane h2 { margin: 0 0 3px; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; text-wrap: balance; }
+.pane h3 { margin: 0 0 8px; font-size: 12px; letter-spacing: .07em; text-transform: uppercase; color: var(--text-2); font-weight: 500; }
+.pane .sub { color: var(--text-2); font-size: 12.5px; margin: 0; max-width: 80ch; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.kpi { background: var(--ink-2); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+.kpi .l { font-size: 11px; color: var(--text-3); letter-spacing: .05em; text-transform: uppercase; }
+.kpi .v { font: 600 24px var(--font-code); font-variant-numeric: tabular-nums; margin-top: 4px; }
+.kpi .v.ok { color: var(--ok); } .kpi .v.warn { color: var(--warn); } .kpi .v.bad { color: var(--err); }
+.bars { display: flex; align-items: flex-end; gap: 3px; height: 70px; padding: 8px 10px 0; background: var(--ink-2); border: 1px solid var(--line); border-radius: 10px; }
+.bars i { flex: 1; background: var(--signal); opacity: .75; border-radius: 2px 2px 0 0; min-height: 2px; }
+.bars-x { display: flex; justify-content: space-between; font: 10px var(--font-code); color: var(--text-3); padding: 3px 2px 0; }
+.list { display: flex; flex-direction: column; gap: 6px; }
+.item { background: var(--ink-2); border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 4px 10px; align-items: baseline; }
+.item .t { font-weight: 500; overflow-wrap: anywhere; }
+.item .d { grid-column: 2 / -1; color: var(--text-2); font-size: 12px; overflow-wrap: anywhere; }
+.item .x { grid-column: 2 / -1; color: var(--text-3); font: 11px var(--font-code); overflow-wrap: anywhere; }
+.item.click { cursor: pointer; } .item.click:hover { border-color: #3a4c66; }
+.item.sel { border-color: rgba(56, 200, 240, .5); }
+.sev { font: 600 10px var(--font-code); text-transform: uppercase; letter-spacing: .04em; padding: 1px 6px; border-radius: 4px; white-space: nowrap; }
+.sev.critical { background: rgba(240, 97, 109, .2); color: #ff9aa2; } .sev.high { background: rgba(240, 140, 80, .18); color: #ffb685; }
+.sev.medium { background: rgba(232, 176, 74, .16); color: var(--warn); } .sev.low { background: var(--ink-3); color: var(--text-2); }
+.sev.pass, .sev.ok { background: rgba(63, 201, 138, .16); color: var(--ok); } .sev.warn { background: rgba(232, 176, 74, .16); color: var(--warn); } .sev.fail { background: rgba(240, 97, 109, .2); color: #ff9aa2; }
+.form-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.form-row input:not([type="checkbox"]):not([type="file"]), .form-row select, .pane textarea { background: var(--ink); border: 1px solid var(--line); border-radius: 7px; padding: 7px 10px; outline: none; min-width: 0; }
+.form-row input:focus, .pane textarea:focus { border-color: rgba(56, 200, 240, .5); }
+.pane textarea { width: 100%; box-sizing: border-box; resize: vertical; font: 12px/1.5 var(--font-code); }
+.grade { font: 700 30px var(--font-code); width: 52px; height: 52px; border-radius: 10px; display: grid; place-items: center; }
+.grade.A, .grade.B { background: rgba(63, 201, 138, .16); color: var(--ok); } .grade.C { background: rgba(232, 176, 74, .16); color: var(--warn); } .grade.D, .grade.F { background: rgba(240, 97, 109, .18); color: #ff9aa2; }
+.pol-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.pol { background: var(--ink-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.pol .l { font-weight: 500; } .pol .h { color: var(--text-3); font-size: 12px; }
+.score-bar { display: block; height: 6px; background: var(--ink-3); border-radius: 3px; overflow: hidden; width: 100%; }
+.score-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--ok), var(--warn), var(--err)); }
+.tok-bars { display: flex; flex-direction: column; gap: 6px; }
+.tok-bars .r { display: grid; grid-template-columns: 130px minmax(0, 1fr) 96px; gap: 10px; align-items: center; font: 11.5px var(--font-code); }
+.tok-bars .r b { display: block; height: 10px; border-radius: 3px; background: var(--signal); }
+.tok-bars .r .n { text-align: right; color: var(--text-2); font-variant-numeric: tabular-nums; background: none; padding: 0; font-size: 11.5px; }
+.codeout { background: #0a0e14; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font: 11.5px/1.5 var(--font-code); white-space: pre-wrap; word-break: break-word; max-height: 320px; overflow: auto; color: var(--text-2); margin: 0; }
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+.s-eve { display: grid; grid-template-columns: minmax(0, 1fr) 380px; }
+.eve-chat { display: grid; grid-template-rows: minmax(0, 1fr) auto; min-height: 0; min-width: 0; border-right: 1px solid var(--line); }
+.eve-thread { overflow: auto; padding: 18px 22px; display: flex; flex-direction: column; gap: 14px; }
+.eve-thread .me { align-self: flex-end; max-width: 75%; background: #15324a; border: 1px solid #1e4766; border-radius: 12px 12px 2px 12px; padding: 8px 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.eve-thread .her { align-self: flex-start; max-width: 80%; display: flex; flex-direction: column; gap: 6px; }
+.eve-thread .her .b { background: var(--ink-2); border: 1px solid var(--line); border-radius: 12px 12px 12px 2px; padding: 9px 13px; white-space: pre-wrap; line-height: 1.55; overflow-wrap: anywhere; }
+.eve-thread .her .m { font: 10.5px var(--font-code); color: var(--text-3); }
+.chipset { display: flex; flex-wrap: wrap; gap: 4px; }
+.chip { font: 10.5px var(--font-code); padding: 1px 7px; border-radius: 10px; background: rgba(63, 201, 138, .12); color: var(--ok); border: 1px solid rgba(63, 201, 138, .25); }
+.eve-side { overflow: auto; background: var(--ink-2); display: flex; flex-direction: column; min-width: 0; }
+.eve-side section { padding: 14px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+.eve-side h3 { margin: 0; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-2); font-weight: 500; display: flex; align-items: center; gap: 8px; }
+.notif { border-left: 3px solid var(--signal); background: var(--ink); border-radius: 6px; padding: 7px 10px; display: flex; flex-direction: column; gap: 2px; }
+.notif.read { opacity: .6; border-left-color: var(--line); }
+.notif.deadline_due, .notif.overdue { border-left-color: var(--err); } .notif.deadline_soon { border-left-color: var(--warn); } .notif.booking { border-left-color: var(--ok); } .notif.prospect_reply { border-left-color: #c9a6ff; }
+.notif .t { font-weight: 500; font-size: 12.5px; } .notif .d { color: var(--text-2); font-size: 12px; } .notif .w { font: 10.5px var(--font-code); color: var(--text-3); }
+.ent { background: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; }
+.ent .h { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ent .n { font-weight: 600; overflow-wrap: anywhere; background: none; color: var(--text); padding: 0; font-family: var(--font-ui); font-size: 13px; }
+.ent .k { font: 10px var(--font-code); text-transform: uppercase; letter-spacing: .05em; color: var(--text-3); }
+.ent ul { margin: 0; padding-left: 16px; color: var(--text-2); font-size: 12px; }
+.ent .due { font: 11px var(--font-code); color: var(--warn); }
+.typefilter { display: flex; flex-wrap: wrap; gap: 4px; }
+.typefilter button { background: var(--ink); border: 1px solid var(--line); border-radius: 12px; padding: 2px 9px; font-size: 11.5px; color: var(--text-2); }
+.typefilter button[aria-pressed="true"] { border-color: rgba(56, 200, 240, .5); color: var(--text); }
+@media (max-width: 980px) { .s-sec { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); } .subnav { flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--line); } .subnav button { white-space: nowrap; } .s-eve { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) 40%; } .eve-chat { border-right: 0; border-bottom: 1px solid var(--line); } .two { grid-template-columns: minmax(0, 1fr); } }
+
 /* Models surface */
 .s-models { overflow: auto; }
 .mx { max-width: 1180px; margin: 0 auto; padding: 18px 22px 40px; display: flex; flex-direction: column; gap: 28px; }
@@ -512,6 +588,9 @@ div.CodeMirror-cursors { visibility: hidden; position: relative; z-index: 3; }
       <button type="button" data-surface="manager" aria-pressed="false" title="Agent Manager (Ctrl+E toggles)">Agent Manager <span class="n" id="review-count" hidden>0</span></button>
       <button type="button" data-surface="deploy" aria-pressed="false" title="Deployments">Deployments</button>
       <button type="button" data-surface="models" aria-pressed="false" title="Models, agents and integrations">Models</button>
+      <button type="button" data-surface="engineering" aria-pressed="false" title="Engineering orchestration">Engineering</button>
+      <button type="button" data-surface="security" aria-pressed="false" title="Security">Security <span class="n" id="sec-count" hidden>0</span></button>
+      <button type="button" data-surface="eve" aria-pressed="false" title="EVE assistant">EVE <span class="n" id="eve-count" hidden>0</span></button>
     </div>
     <div class="cmd-hint"><button id="open-palette" type="button">Go to file or command…  Ctrl P</button></div>
     <button class="conn demo" id="conn" type="button" title="Connection settings"><span class="dot"></span><span id="conn-label">connecting</span></button>
@@ -611,6 +690,47 @@ div.CodeMirror-cursors { visibility: hidden; position: relative; z-index: 3; }
         <div class="task-rows" id="mg-rows"></div>
       </div>
       <div class="mg-detail" id="mg-detail"></div>
+    </section>
+
+    <!-- Security surface -->
+    <section class="surface s-sec" id="s-security" data-surface="security" hidden>
+      <nav class="subnav" id="sec-nav" aria-label="Security sections">
+        <button type="button" data-sv="overview" aria-pressed="true">Overview</button>
+        <button type="button" data-sv="ai" aria-pressed="false">AI security</button>
+        <button type="button" data-sv="data" aria-pressed="false">Data protection</button>
+        <button type="button" data-sv="email" aria-pressed="false">Email security</button>
+        <button type="button" data-sv="dmarc" aria-pressed="false">DMARC analyzer</button>
+        <button type="button" data-sv="behavior" aria-pressed="false">Behavior</button>
+        <button type="button" data-sv="governance" aria-pressed="false">Data governance</button>
+        <button type="button" data-sv="threat" aria-pressed="false">Threat response <span class="n" id="sec-open" hidden></span></button>
+        <button type="button" data-sv="tools" aria-pressed="false">Tool access</button>
+      </nav>
+      <div class="sec-body" id="sec-body"></div>
+    </section>
+
+    <!-- EVE surface -->
+    <section class="surface s-eve" id="s-eve" data-surface="eve" hidden>
+      <div class="eve-chat">
+        <div class="eve-thread" id="eve-thread"></div>
+        <form class="composer" id="eve-form">
+          <textarea id="eve-in" rows="2" placeholder="Ask EVE, or tell her something to remember: “Client Marco needs the Oak Street proposal by Dec 3”" aria-label="Message EVE"></textarea>
+          <div class="comp-row"><span class="grow" id="eve-note" style="font-size:11.5px;color:var(--text-3)"></span><button type="submit" class="btn primary">Send</button></div>
+        </form>
+      </div>
+      <aside class="eve-side">
+        <section><h3>Notifications <span class="n" id="eve-unread" hidden></span><span style="flex:1"></span><button type="button" class="mini" id="eve-readall">Mark all read</button></h3><div class="list" id="eve-notifs"></div></section>
+        <section><h3>Memory <span style="flex:1"></span><span id="eve-mem-count" style="font:11px var(--font-code);color:var(--text-3);letter-spacing:0;text-transform:none"></span></h3>
+          <div class="typefilter" id="eve-types"></div>
+          <div class="form-row"><input id="eve-q" placeholder="Search memory" aria-label="Search memory" style="flex:1"></div>
+          <div class="list" id="eve-mem"></div></section>
+        <section><h3>Watchers</h3><div id="eve-watch"></div></section>
+      </aside>
+    </section>
+
+    <!-- Engineering surface -->
+    <section class="surface s-sec" id="s-engineering" data-surface="engineering" hidden>
+      <nav class="subnav" id="eng-nav" aria-label="Engineering projects"></nav>
+      <div class="sec-body" id="eng-body"></div>
     </section>
 
     <!-- Models surface -->
@@ -748,6 +868,10 @@ const AGENTS = [
   { id: 'NATURA', role: 'Nature and life sciences', group: 'Science', color: '#4cc96a', run: 'natura how do monarch butterflies navigate during migration?' },
   { id: 'MAESTRO', role: 'Conducts every LLM: routes, falls back, judges', group: 'Orchestration', color: '#ff9e64', run: 'ask which crops suit clay soil in north Texas?' },
   { id: 'LINDY', role: 'Triggers Lindy.ai workflows', group: 'Integrations', color: '#7aa2ff', run: 'dispatch LINDY status' },
+  { id: 'AXIOM', role: 'Intent-driven engineering orchestrator', group: 'Engineering', color: '#5ec4ff', run: 'dispatch AXIOM list' },
+  { id: 'MORTEX', role: 'Materials selection and prototyping', group: 'Engineering', color: '#d9a066', run: 'dispatch MORTEX library' },
+  { id: 'SENTINEL', role: 'Safety compliance and live alerts', group: 'Engineering', color: '#f06a6a', run: 'dispatch SENTINEL alerts' },
+  { id: 'EVE', role: 'Assistant with lasting memory', group: 'Assistant', color: '#e58fd8', run: 'dispatch EVE recall {"query":"deadlines"}' },
 ];
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -1103,6 +1227,9 @@ function setSurface(name) {
   if (name === 'manager') { renderManager(); refreshTasks(true); }
   if (name === 'deploy') { renderDeploys(); refreshDeploys(true); }
   if (name === 'models') { renderModels(); loadLlm(); }
+  if (name === 'security') renderSecurity();
+  if (name === 'eve') loadEve();
+  if (name === 'engineering') loadEngineering();
 }
 $$('.titlebar [data-surface]').forEach((b) => b.addEventListener('click', () => setSurface(b.dataset.surface)));
 
@@ -1675,6 +1802,520 @@ $('#arena-form').addEventListener('submit', async (e) => {
 });
 $('#arena-in').addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); $('#arena-form').requestSubmit(); } });
 
+/* ── Security ── */
+const SEC = '/ide/api/security';
+S.sec = { view: 'overview', cache: {}, incident: null, email: null, dmarc: null, report: null, codeOut: null, skill: null };
+const sevPill = (s) => `<span class="sev ${esc(s)}">${esc(s)}</span>`;
+const when = (t) => (typeof t === 'number' ? ago(t) : ago(new Date(t).getTime()));
+function untilText(t) {
+  const ms = new Date(t).getTime() - Date.now();
+  if (ms < 0) return `${ago(new Date(t).getTime())}, overdue`;
+  const days = Math.floor(ms / 86_400_000), hours = Math.round(ms / 3_600_000);
+  return days >= 1 ? `in ${days} day${days > 1 ? 's' : ''}` : `in ${hours} hour${hours === 1 ? '' : 's'}`;
+}
+function secExample() {
+  const now = Date.now();
+  return {
+    overview: { posture: 71, openIncidents: 3, criticalOpen: 1, events24h: 48, redacted24h: 9, blocked24h: 2, hourly: [0, 0, 1, 0, 0, 2, 4, 6, 3, 1, 0, 2, 5, 7, 4, 2, 1, 0, 3, 2, 1, 1, 2, 1],
+      topFindings: [{ severity: 'high', title: 'Unregistered agent file: PRICER', fix: 'Review the file, then register it in src/core/router.ts or delete it.' }, { severity: 'medium', title: 'Agent endpoints have no API key', fix: 'Set NEURAL_API_KEY.' }],
+      riskiest: [{ actor: 'GATEWAY', score: 22.5, level: 'coach', events: 6 }, { actor: 'IDE', score: 8, level: 'normal', events: 3 }], lastReviewAt: now - 180000,
+      policy: { secret: 'redact', pii: 'monitor', injection: 'quarantine', exemptLocal: true, scanOutputs: true, toolDeny: {}, codeExecution: false, toolAccess: 'progressive' } },
+    incidents: { lastRunAt: now - 180000, incidents: [
+      { id: 'inc_ex1', rule: 'critical_injection', title: 'Credential-exfiltration instructions reached GATEWAY', severity: 'critical', status: 'open', actor: 'GATEWAY', openedAt: now - 3600000, updatedAt: now - 3500000, eventIds: ['a'], notified: 'sent', timeline: [{ at: now - 3600000, text: 'Opened by rule critical_injection from 1 event(s)' }, { at: now - 3590000, text: 'AI triage by anthropic:claude-opus-5-5' }, { at: now - 3580000, text: 'Notified through Lindy' }], triage: { model: 'anthropic:claude-opus-5-5', summary: 'A web page returned to the gateway contained instructions to send API keys to an external host. The content was quarantined, so the model was warned not to follow it. Next: block the source URL, review gateway calls after 14:02 in the archive, and keep injection mode on quarantine or block.', at: now - 3590000 } },
+      { id: 'inc_ex2', rule: 'email_attack', title: 'Malicious email: URGENT: verify your account within 24 hours', severity: 'critical', status: 'acknowledged', actor: 'email:we11sfargo-secure.com', openedAt: now - 7200000, updatedAt: now - 7000000, eventIds: ['b'], notified: 'sent', timeline: [{ at: now - 7200000, text: 'Opened by rule email_attack from 1 event(s)' }] },
+      { id: 'inc_ex3', rule: 'domain_spoofable', title: 'Domain can be spoofed: habitaculum.com', severity: 'high', status: 'open', actor: 'domain:habitaculum.com', openedAt: now - 86400000, updatedAt: now - 86400000, eventIds: ['c'], notified: 'skipped', timeline: [{ at: now - 86400000, text: 'Opened by rule domain_spoofable from 1 event(s)' }] },
+    ] },
+  };
+}
+function secGo(view) { S.sec.view = view; renderSecurity(); }
+$('#sec-nav').addEventListener('click', (e) => { const b = e.target.closest('[data-sv]'); if (b) secGo(b.dataset.sv); });
+async function secGet(path, exampleKey) {
+  if (!S.live) return exampleKey ? secExample()[exampleKey] : null;
+  return api(SEC + path);
+}
+function demoNote(text) { return S.live ? '' : `<div class="callout">${esc(text || 'Example data. Start neural-link with npm run dev and open http://localhost:3001 to use this with your own data.')}</div>`; }
+async function renderSecurity() {
+  $$('#sec-nav [data-sv]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.sv === S.sec.view)));
+  const body = $('#sec-body');
+  const v = S.sec.view;
+  body.innerHTML = '<div class="pane"><div class="empty">Loading…</div></div>';
+  try {
+    const html = await ({ overview: secOverview, ai: secAi, data: secData, email: secEmail, dmarc: secDmarc, behavior: secBehavior, governance: secGovernance, threat: secThreat, tools: secTools })[v]();
+    if (S.sec.view === v) body.innerHTML = `<div class="pane">${html}</div>`;
+  } catch (err) {
+    body.innerHTML = `<div class="pane"><div class="callout err">${esc(err.message)}</div></div>`;
+  }
+}
+async function refreshSecBadges() {
+  if (!S.live) { $('#sec-count').hidden = true; return; }
+  try {
+    const d = await api(SEC + '/incidents');
+    const open = d.incidents.filter((i) => i.status === 'open').length;
+    $('#sec-count').hidden = !open; $('#sec-count').textContent = open;
+    $('#sec-open').hidden = !open; $('#sec-open').textContent = open;
+  } catch { /* offline */ }
+}
+
+async function secOverview() {
+  const d = await secGet('/overview', 'overview');
+  const pcls = d.posture >= 80 ? 'ok' : d.posture >= 60 ? 'warn' : 'bad';
+  const max = Math.max(1, ...d.hourly);
+  return `${demoNote()}
+    <div><h2>Security overview</h2><p class="sub">Guardrails run on every model call, Lindy webhook and gateway request. Threat response reviews events every 5 minutes${d.lastReviewAt ? `; last review ${when(d.lastReviewAt)}` : ''}.</p></div>
+    <div class="kpis">
+      <div class="kpi"><div class="l">Posture</div><div class="v ${pcls}">${d.posture}<span style="font-size:13px;color:var(--text-3)">/100</span></div></div>
+      <div class="kpi"><div class="l">Open incidents</div><div class="v ${d.criticalOpen ? 'bad' : d.openIncidents ? 'warn' : 'ok'}">${d.openIncidents}</div></div>
+      <div class="kpi"><div class="l">Events · 24h</div><div class="v">${d.events24h}</div></div>
+      <div class="kpi"><div class="l">Redacted · 24h</div><div class="v">${d.redacted24h}</div></div>
+      <div class="kpi"><div class="l">Blocked · 24h</div><div class="v">${d.blocked24h}</div></div>
+    </div>
+    <div><h3>Events per hour</h3><div class="bars">${d.hourly.map((n) => `<i style="height:${Math.round((n / max) * 100)}%" title="${n} event(s)"></i>`).join('')}</div><div class="bars-x"><span>24h ago</span><span>now</span></div></div>
+    <div class="two">
+      <div><h3>Top findings</h3><div class="list">${d.topFindings.length ? d.topFindings.map((f) => `<div class="item">${sevPill(f.severity)}<span class="t">${esc(f.title)}</span><span class="d">${esc(f.fix)}</span></div>`).join('') : '<div class="empty" style="padding:0">No findings.</div>'}</div></div>
+      <div><h3>Riskiest actors</h3><div class="list">${d.riskiest.length ? d.riskiest.map((r) => `<div class="item"><span class="sev ${r.level === 'restrict' ? 'critical' : r.level === 'review' ? 'high' : r.level === 'coach' ? 'medium' : 'low'}">${esc(r.level)}</span><span class="t">${esc(r.actor)}</span><span class="x">score ${r.score} · ${r.events} event(s)</span></div>`).join('') : '<div class="empty" style="padding:0">No risky behaviour recorded.</div>'}</div></div>
+    </div>
+    <div class="form-row"><button type="button" class="btn primary" data-act="review">Run threat review now</button><button type="button" class="btn" data-go="threat">Open incidents</button></div>`;
+}
+
+async function secAi() {
+  if (!S.live) return `${demoNote()}<div><h2>AI security</h2><p class="sub">Discovers every agent on disk, flags hidden (unregistered) agents, shows where data flows and which endpoints are exposed, and sets the guardrail policy.</p></div>${await policyForm(secExample().overview.policy)}`;
+  const inv = await api(SEC + '/inventory');
+  const pol = await api(SEC + '/policy');
+  return `<div><h2>AI security <span class="sev ${inv.score >= 80 ? 'ok' : inv.score >= 60 ? 'warn' : 'fail'}">posture ${inv.score}</span></h2><p class="sub">Agents found on disk compared with what the router runs, data flows to model providers and integrations, and exposed endpoints.</p></div>
+    <div><h3>Findings</h3><div class="list">${inv.findings.length ? inv.findings.map((f) => `<div class="item">${sevPill(f.severity)}<span class="t">${esc(f.title)}</span><span class="d">${esc(f.detail)}</span><span class="x">Fix: ${esc(f.fix)}</span></div>`).join('') : '<div class="empty" style="padding:0">No findings.</div>'}</div></div>
+    ${await policyForm(pol)}
+    <div><h3>Agent inventory · ${inv.agents.length}</h3><div class="tbl-wrap"><table class="stats"><thead><tr><th>Agent</th><th>Registered</th><th>Uses LLM</th><th>Tools</th><th>Writes files</th><th>Network</th><th>Model</th></tr></thead><tbody>${inv.agents.map((a) => `<tr><td>${esc(a.id)}</td><td style="${a.registered ? '' : 'color:var(--err)'}">${a.registered ? 'yes' : 'HIDDEN'}</td><td>${a.callsLlm ? 'yes' : '—'}</td><td>${a.callsTools ? 'yes' : '—'}</td><td>${a.writesFiles ? 'yes' : '—'}</td><td>${a.network ? 'yes' : '—'}</td><td>${esc(a.model || '—')}</td></tr>`).join('')}</tbody></table></div></div>
+    <div class="two"><div><h3>Endpoints</h3><div class="list">${inv.endpoints.map((e) => `<div class="item"><span class="sev ${/open/.test(e.guarded) ? 'fail' : /disabled/.test(e.guarded) ? 'low' : 'ok'}">${/open/.test(e.guarded) ? 'open' : /disabled/.test(e.guarded) ? 'off' : 'guarded'}</span><span class="t">${esc(e.path)}</span><span class="x">${esc(e.guarded)}</span></div>`).join('')}</div></div>
+    <div><h3>Data flows</h3><div class="list">${inv.providers.filter((p) => p.configured).map((p) => `<div class="item"><span class="sev ${p.local ? 'ok' : 'low'}">${p.local ? 'local' : 'external'}</span><span class="t">${esc(p.label)}</span></div>`).join('')}${inv.integrations.langsmith ? '<div class="item"><span class="sev low">traces</span><span class="t">LangSmith</span></div>' : ''}${inv.integrations.lindyOut ? '<div class="item"><span class="sev low">webhook</span><span class="t">Lindy (outbound)</span></div>' : ''}</div></div></div>`;
+}
+
+async function policyForm(p) {
+  const seg = (key, opts, labels) => `<div class="seg" role="group" data-pol-key="${key}">${opts.map((o, i) => `<button type="button" data-pol-val="${o}" aria-pressed="${p[key] === o}">${labels[i]}</button>`).join('')}</div>`;
+  const deny = Object.entries(p.toolDeny || {}).map(([a, t]) => `${a}: ${t.join(', ')}`).join('\n');
+  return `<div><h3>Guardrails</h3><div class="pol-grid">
+    <div class="pol"><span class="l">Secrets</span><span class="h">API keys, tokens, private keys, passwords</span>${seg('secret', ['off', 'monitor', 'redact', 'block'], ['Off', 'Monitor', 'Redact', 'Block'])}</div>
+    <div class="pol"><span class="l">Personal data</span><span class="h">Emails, phone numbers, SSNs, card numbers, IBANs</span>${seg('pii', ['off', 'monitor', 'redact', 'block'], ['Off', 'Monitor', 'Redact', 'Block'])}</div>
+    <div class="pol"><span class="l">Prompt injection</span><span class="h">Instructions hidden in tool results and fetched content</span>${seg('injection', ['off', 'monitor', 'quarantine', 'block'], ['Off', 'Monitor', 'Quarantine', 'Block'])}</div>
+    <div class="pol"><span class="l">Options</span>
+      <label class="check"><input type="checkbox" data-pol-bool="exemptLocal"${p.exemptLocal ? ' checked' : ''}> Skip redaction for local models (Ollama)</label>
+      <label class="check"><input type="checkbox" data-pol-bool="scanOutputs"${p.scanOutputs ? ' checked' : ''}> Scan model output for leaked secrets</label></div>
+  </div>
+  <div class="pol" style="margin-top:10px"><span class="l">Denied tools per agent</span><span class="h">One line per agent, e.g. <code>IDE: trigger_lindy, run_code</code>. Use <code>*</code> to deny all tools.</span><textarea id="pol-deny" rows="3" aria-label="Denied tools">${esc(deny)}</textarea><div class="form-row"><button type="button" class="btn" data-act="save-deny">Save tool rules</button></div></div></div>`;
+}
+
+async function secData() {
+  if (!S.live) return `${demoNote()}<div><h2>Data protection</h2><p class="sub">Secrets and personal data are detected and redacted before they reach a model provider, LangSmith or a Lindy webhook. Redacted values become stable tokens kept only in server memory, so an agent editing a file never writes the placeholder back.</p></div>`;
+  const ev = await api(SEC + '/events?limit=300');
+  const dlp = ev.filter((e) => ['secret', 'pii', 'output_leak'].includes(e.kind));
+  const inv = await api(SEC + '/inventory');
+  const secrets = inv.findings.filter((f) => f.id.startsWith('secret:') || f.id === 'env_tracked');
+  return `<div><h2>Data protection</h2><p class="sub">Detections on everything leaving the platform. Redacted values become stable tokens kept only in server memory, so an agent editing a file never writes the placeholder back.</p></div>
+    <div><h3>Test the detectors</h3><textarea id="dlp-text" rows="4" placeholder="Paste text to see what would be flagged"></textarea><div class="form-row" style="margin-top:6px"><button type="button" class="btn" data-act="scan-text">Scan</button><span id="dlp-out" class="sub"></span></div></div>
+    <div><h3>Secrets in the workspace</h3><div class="list">${secrets.length ? secrets.map((f) => `<div class="item">${sevPill(f.severity)}<span class="t">${esc(f.title)}</span><span class="d">${esc(f.detail)}</span><span class="x">${esc(f.fix)}</span></div>`).join('') : '<div class="empty" style="padding:0">No secrets found in src/ and .env is not committed.</div>'}</div></div>
+    <div><h3>Recent detections · ${dlp.length}</h3>${eventTable(dlp)}</div>`;
+}
+
+function eventTable(evs) {
+  if (!evs.length) return '<div class="empty" style="padding:0">Nothing yet.</div>';
+  return `<div class="tbl-wrap"><table class="stats"><thead><tr><th>When</th><th>Severity</th><th>Kind</th><th>Action</th><th>Actor</th><th style="text-align:left">Summary</th></tr></thead><tbody>${evs.slice(0, 100).map((e) => `<tr><td>${clock(e.at)}</td><td>${sevPill(e.severity)}</td><td>${esc(e.kind)}</td><td>${esc(e.action)}</td><td>${esc(e.actor)}</td><td style="text-align:left;white-space:normal;min-width:260px">${esc(e.summary)}</td></tr>`).join('')}</tbody></table></div>`;
+}
+
+const SAMPLE_EMAIL = `From: "Wells Fargo Security" <alerts@we11sfargo-secure.com>
+Reply-To: help@protonmail.com
+Subject: URGENT: verify your account within 24 hours
+Authentication-Results: mx.google.com; spf=softfail; dkim=none; dmarc=fail
+Content-Type: text/html
+
+<p>Your account has been suspended. <a href="http://185.22.10.4/login">https://www.wellsfargo.com/verify</a></p>
+Content-Disposition: attachment; filename="statement.pdf.exe"`;
+async function secEmail() {
+  const r = S.sec.email;
+  return `${demoNote(S.live ? '' : 'Analysis runs in your browser preview only with neural-link running. Press Analyze to see an example result.')}
+    <div><h2>Email security</h2><p class="sub">Paste a message's full source (in Gmail: More → Show original; in Outlook: View → View source). Checks SPF, DKIM and DMARC results, lookalike and impersonated domains, link tricks, risky attachments and phishing language. Set NL_PROTECTED_DOMAINS to your own domains to catch lookalikes.</p></div>
+    <textarea id="email-raw" rows="9" placeholder="Paste the raw email here">${esc(r?.raw ?? '')}</textarea>
+    <div class="form-row"><label class="check"><input type="checkbox" id="email-ai"> Ask an AI analyst for a second opinion</label><span class="grow"></span><button type="button" class="btn" data-act="email-sample">Load a sample</button><button type="button" class="btn primary" data-act="email">Analyze</button></div>
+    ${r?.report ? emailReport(r.report) : ''}`;
+}
+function emailReport(r) {
+  const cls = r.verdict === 'malicious' ? 'fail' : r.verdict === 'suspicious' ? 'warn' : 'ok';
+  return `<div class="pol"><div class="form-row"><span class="sev ${cls}" style="font-size:12px">${esc(r.verdict)}</span><span class="t">Risk score ${r.score}/100</span></div><div class="score-bar"><i style="width:${r.score}%"></i></div>
+    <div class="kv"><span>From</span><span>${esc(r.from.name)} &lt;${esc(r.from.address)}&gt;</span><span>Reply-To</span><span>${esc(r.replyTo || '—')}</span><span>Subject</span><span>${esc(r.subject)}</span><span>SPF / DKIM / DMARC</span><span>${esc(r.auth.spf || '—')} / ${esc(r.auth.dkim || '—')} / ${esc(r.auth.dmarc || '—')}</span></div></div>
+    <div><h3>Signals · ${r.signals.length}</h3><div class="list">${r.signals.map((s) => `<div class="item">${sevPill(s.severity)}<span class="t">${esc(s.title)}</span><span class="d">${esc(s.detail)}</span></div>`).join('') || '<div class="empty" style="padding:0">No warning signs found.</div>'}</div></div>
+    ${r.ai ? `<div class="verdict"><div class="m">${r.ai.model ? `AI analyst · ${esc(r.ai.model)}` : 'AI analyst unavailable'}</div><div class="tx">${esc(r.ai.opinion || r.ai.error)}</div></div>` : ''}
+    ${r.links?.length ? `<div><h3>Links</h3><div class="tbl-wrap"><table class="stats"><thead><tr><th>Shown text</th><th>Opens</th></tr></thead><tbody>${r.links.map((l) => `<tr><td style="text-align:left">${esc(l.text || '—')}</td><td style="text-align:left">${esc(l.href)}</td></tr>`).join('')}</tbody></table></div></div>` : ''}`;
+}
+const EXAMPLE_EMAIL_REPORT = { verdict: 'malicious', score: 100, from: { name: 'Wells Fargo Security', address: 'alerts@we11sfargo-secure.com' }, replyTo: 'help@protonmail.com', subject: 'URGENT: verify your account within 24 hours', auth: { spf: 'softfail', dkim: 'none', dmarc: 'fail' }, links: [{ text: 'https://www.wellsfargo.com/verify', href: 'http://185.22.10.4/login' }], signals: [{ severity: 'critical', title: 'Disguised file extension', detail: 'statement.pdf.exe' }, { severity: 'critical', title: 'Lookalike of a protected domain', detail: 'we11sfargo-secure.com imitates wellsfargo.com.' }, { severity: 'high', title: 'DMARC failed', detail: 'The message failed DMARC.' }, { severity: 'high', title: 'Link text and destination differ', detail: 'Shows wellsfargo.com but opens 185.22.10.4.' }, { severity: 'medium', title: 'Replies go to a different domain', detail: 'From we11sfargo-secure.com, but replies go to help@protonmail.com.' }, { severity: 'high', title: 'Phishing language', detail: 'asks you to verify an account; uses urgency; threatens account suspension' }] };
+
+async function secDmarc() {
+  const d = S.sec.dmarc, rep = S.sec.report;
+  return `${demoNote()}
+    <div><h2>DMARC analyzer</h2><p class="sub">Checks a domain's DMARC policy, SPF record (including the 10-lookup limit) and DKIM keys on common selectors, grades it, and suggests the next DMARC record. Upload aggregate reports to see who sends mail as your domain.</p></div>
+    <div class="form-row"><input id="dmarc-domain" placeholder="example.com" value="${esc(d?.domain ?? '')}" aria-label="Domain" style="flex:1;max-width:340px"><button type="button" class="btn primary" data-act="dmarc">Check domain</button></div>
+    ${d ? `<div class="form-row"><span class="grade ${d.grade}">${d.grade}</span><div><div class="t" style="font-weight:600">${esc(d.domain)}</div><div class="sub">${d.checks.filter((c) => c.status === 'fail').length} failing · ${d.checks.filter((c) => c.status === 'warn').length} warnings</div></div></div>
+      <div class="list">${d.checks.map((c) => `<div class="item"><span class="sev ${c.status}">${c.status}</span><span class="t">${esc(c.title)}</span><span class="d">${esc(c.detail)}</span></div>`).join('')}</div>
+      <div class="kv"><span>DMARC</span><span>${esc(d.dmarc.record || 'none')}</span><span>SPF</span><span>${esc(d.spf.record || 'none')}</span><span>DKIM selectors</span><span>${esc(d.dkim.selectorsFound.join(', ') || 'none found')}</span><span>MX</span><span>${esc(d.mx.join(', ') || 'none')}</span></div>
+      <div><h3>Suggested next DMARC record (TXT at _dmarc.${esc(d.domain)})</h3><pre class="codeout">${esc(d.recommendedDmarc)}</pre></div>` : ''}
+    <div><h3>Aggregate report</h3><p class="sub">Paste or open the XML from a rua report (unzip it first).</p><textarea id="dmarc-xml" rows="4" placeholder="&lt;feedback&gt;…"></textarea><div class="form-row" style="margin-top:6px"><input type="file" id="dmarc-file" accept=".xml,text/xml" aria-label="Report file"><span class="grow"></span><button type="button" class="btn" data-act="dmarc-report">Summarize report</button></div></div>
+    ${rep ? `<div class="kpis"><div class="kpi"><div class="l">Messages</div><div class="v">${rep.totalMessages}</div></div><div class="kpi"><div class="l">Aligned</div><div class="v ${rep.passRate >= 98 ? 'ok' : rep.passRate >= 90 ? 'warn' : 'bad'}">${rep.passRate}%</div></div><div class="kpi"><div class="l">Failing sources</div><div class="v ${rep.failingSources ? 'bad' : 'ok'}">${rep.failingSources}</div></div></div>
+      <div class="tbl-wrap"><table class="stats"><thead><tr><th>Source IP</th><th>Messages</th><th>SPF</th><th>DKIM</th><th>Disposition</th><th>Aligned</th></tr></thead><tbody>${rep.sources.map((s) => `<tr><td>${esc(s.ip)}</td><td>${s.count}</td><td>${esc(s.spf)}</td><td>${esc(s.dkim)}</td><td>${esc(s.disposition)}</td><td style="color:${s.aligned ? 'var(--ok)' : 'var(--err)'}">${s.aligned ? 'yes' : 'no'}</td></tr>`).join('')}</tbody></table></div>` : ''}`;
+}
+
+async function secBehavior() {
+  if (!S.live) return `${demoNote()}<div><h2>Security behaviour</h2><p class="sub">Each agent and integration gets a risk score from its own risky actions (sending secrets or personal data, leaking secrets in output, using denied tools), decayed over 7 days. Crossing a threshold applies an intervention: coach adds a reminder to the agent's prompt, review stops edits from being applied automatically, and restrict blocks model calls until cleared.</p></div>`;
+  const d = await api(SEC + '/behavior');
+  const maxScore = Math.max(d.thresholds.restrict, ...d.actors.map((a) => a.score));
+  return `<div><h2>Security behaviour</h2><p class="sub">Risk comes from each actor's own risky actions (secrets or personal data sent, secrets in output, denied tools), decayed over 7 days. Mitigated events count half. Coach adds a reminder to the agent's prompt, review stops edits from being applied automatically, restrict blocks model calls until cleared.</p></div>
+    <div class="pol-grid">${['coach', 'review', 'restrict'].map((l) => `<div class="pol"><span class="l">${l[0].toUpperCase() + l.slice(1)} at score</span><div class="form-row"><input type="number" min="1" data-th="${l}" value="${d.thresholds[l]}" style="width:90px" aria-label="${l} threshold"><label class="check"><input type="checkbox" data-auto="${l}"${d.auto[l] ? ' checked' : ''}> apply automatically</label></div></div>`).join('')}</div>
+    <div class="form-row"><button type="button" class="btn" data-act="save-behavior">Save thresholds</button></div>
+    <div><h3>Actors</h3><div class="list">${d.actors.length ? d.actors.map((a) => `<div class="item"><span class="sev ${a.level === 'restrict' ? 'critical' : a.level === 'review' ? 'high' : a.level === 'coach' ? 'medium' : 'low'}">${a.intervention ? esc(a.intervention.level) : esc(a.level)}</span><span class="t">${esc(a.actor)} · score ${a.score}</span>
+      <span class="form-row" style="justify-content:flex-end">${a.intervention ? `<button type="button" class="mini" data-clear="${esc(a.actor)}">Clear</button>` : ''}<button type="button" class="mini" data-iv="${esc(a.actor)}|coach">Coach</button><button type="button" class="mini" data-iv="${esc(a.actor)}|review">Review</button><button type="button" class="mini danger" data-iv="${esc(a.actor)}|restrict">Restrict</button></span>
+      <span class="d"><span class="score-bar"><i style="width:${Math.min(100, (a.score / maxScore) * 100)}%"></i></span></span>
+      <span class="x">${Object.entries(a.kinds).map(([k, n]) => `${n} ${k}`).join(' · ')}${a.intervention ? ` · ${esc(a.intervention.reason)}` : ''}</span></div>`).join('') : '<div class="empty" style="padding:0">No risky behaviour recorded.</div>'}</div></div>`;
+}
+
+async function secGovernance() {
+  if (!S.live) return `${demoNote()}<div><h2>Data governance</h2><p class="sub">Every model call, agent run, Lindy message, analyzed email and incident is captured in an append-only archive. Each record carries the hash of the one before it, so any edit or deletion is detectable. Search it, place legal holds that survive retention, and export what you find.</p></div>`;
+  const g = await api(SEC + '/governance');
+  const q = S.sec.govQ ?? '';
+  const res = await api(`${SEC}/governance/search?q=${encodeURIComponent(q)}&limit=50${S.sec.govKind ? `&kind=${S.sec.govKind}` : ''}`);
+  return `<div><h2>Data governance</h2><p class="sub">Append-only archive of model calls, agent runs, Lindy messages, emails and incidents. Each record carries the previous record's hash, so edits and deletions are detectable.</p></div>
+    <div class="kpis"><div class="kpi"><div class="l">Records</div><div class="v">${g.records}</div></div><div class="kpi"><div class="l">Integrity</div><div class="v ${g.chain.ok ? 'ok' : 'bad'}" style="font-size:16px">${g.chain.ok ? 'chain verified' : `broken at #${g.chain.brokenAt}`}</div></div><div class="kpi"><div class="l">Retention</div><div class="v">${g.retentionDays}<span style="font-size:13px;color:var(--text-3)"> days</span></div></div><div class="kpi"><div class="l">Legal holds</div><div class="v">${g.holds.filter((h) => h.active).length}</div></div></div>
+    <div class="form-row"><input id="gov-q" placeholder="Search records" value="${esc(q)}" style="flex:1;max-width:360px" aria-label="Search"><select id="gov-kind" aria-label="Kind"><option value="">All kinds</option>${['llm_call', 'agent_run', 'lindy_out', 'lindy_in', 'email', 'incident', 'assistant', 'note', 'purge'].map((k) => `<option${S.sec.govKind === k ? ' selected' : ''}>${k}</option>`).join('')}</select><button type="button" class="btn" data-act="gov-search">Search</button><a class="btn" href="${esc(S.base)}${SEC}/governance/export?q=${encodeURIComponent(q)}${S.sec.govKind ? `&kind=${S.sec.govKind}` : ''}" target="_blank" rel="noopener">Export results</a></div>
+    <div class="list">${res.results.map((r) => `<div class="item"><span class="sev low">${esc(r.kind)}</span><span class="t">#${r.seq} · ${esc(r.subject)}</span><span class="x">${new Date(r.at).toLocaleString()} · ${esc(r.actor)}${r.hold ? ` · on hold: ${esc(r.hold)}` : ''}</span><span class="d" style="white-space:pre-wrap;max-height:120px;overflow:auto">${esc(r.content.slice(0, 800))}</span></div>`).join('') || '<div class="empty" style="padding:0">No records match.</div>'}</div>
+    <div class="two"><div class="pol"><span class="l">Retention</span><span class="h">Older records are removed unless a legal hold matches them.</span><div class="form-row"><input type="number" id="gov-days" min="1" max="3650" value="${g.retentionDays}" style="width:100px" aria-label="Retention days"> days <button type="button" class="btn" data-act="gov-retention">Save</button><button type="button" class="btn" data-act="gov-apply">Apply now</button></div></div>
+    <div class="pol"><span class="l">Legal holds</span>${g.holds.filter((h) => h.active).map((h) => `<div class="form-row"><span class="t">${esc(h.name)}</span><span class="sub">${esc(h.terms.join(', '))}</span><span class="grow"></span><button type="button" class="mini" data-release="${esc(h.id)}">Release</button></div>`).join('') || '<span class="h">None.</span>'}
+      <div class="form-row"><input id="hold-name" placeholder="Matter name" style="flex:1" aria-label="Hold name"><input id="hold-terms" placeholder="terms, comma separated" style="flex:1" aria-label="Hold terms"><button type="button" class="btn" data-act="hold">Place hold</button></div></div></div>`;
+}
+
+async function secThreat() {
+  const d = await secGet('/incidents', 'incidents');
+  const sel = d.incidents.find((i) => i.id === S.sec.incident) || d.incidents[0];
+  return `${demoNote()}
+    <div><h2>Threat response</h2><p class="sub">Every 5 minutes, new security events are correlated into incidents (injection campaigns, secret exposure, malicious email, spoofable domains, hidden agents, restricted agents). New incidents get an AI triage, and high or critical ones are sent to Lindy.${d.lastRunAt ? ` Last review ${when(d.lastRunAt)}.` : ''}</p></div>
+    <div class="form-row"><button type="button" class="btn primary" data-act="review">Run review now</button></div>
+    <div class="two"><div class="list">${d.incidents.length ? d.incidents.map((i) => `<div class="item click${sel && sel.id === i.id ? ' sel' : ''}" data-inc="${esc(i.id)}">${sevPill(i.severity)}<span class="t">${esc(i.title)}</span><span class="x">${esc(i.status)} · opened ${when(i.openedAt)} · ${i.eventIds.length} event(s)${i.notified === 'sent' ? ' · sent to Lindy' : ''}</span></div>`).join('') : '<div class="empty" style="padding:0">No incidents.</div>'}</div>
+    <div>${sel ? `<div class="pol"><div class="form-row">${sevPill(sel.severity)}<span class="t" style="font-weight:600">${esc(sel.title)}</span></div><div class="kv"><span>Status</span><span>${esc(sel.status)}</span><span>Rule</span><span>${esc(sel.rule)}</span><span>Actor</span><span>${esc(sel.actor)}</span></div>
+      ${sel.triage ? `<div class="verdict" style="margin:0"><div class="m">${sel.triage.model ? `AI triage · ${esc(sel.triage.model)}` : 'AI triage unavailable'}</div><div class="tx">${esc(sel.triage.summary || sel.triage.error)}</div></div>` : ''}
+      <div class="form-row">${sel.status !== 'acknowledged' && sel.status !== 'resolved' ? `<button type="button" class="btn" data-st="${esc(sel.id)}|acknowledged">Acknowledge</button>` : ''}${sel.status !== 'resolved' ? `<button type="button" class="btn accept" data-st="${esc(sel.id)}|resolved">Resolve</button>` : `<button type="button" class="btn" data-st="${esc(sel.id)}|open">Reopen</button>`}<button type="button" class="btn" data-retriage="${esc(sel.id)}">Re-run triage</button></div>
+      <h3 style="margin-top:6px">Timeline</h3><ul class="timeline">${sel.timeline.map((t) => `<li><span class="t">${clock(t.at)}</span><span class="k">·</span><span class="x">${esc(t.text)}</span></li>`).join('')}</ul></div>` : ''}</div></div>`;
+}
+
+async function secTools() {
+  const d = S.live ? await api(SEC + '/tools') : { mcpTools: 212, skills: [{ name: 'security-triage', description: 'How to triage a security incident.' }, { name: 'dmarc-rollout', description: 'Safe plan to move a domain to p=reject.' }], tokens: { full: 17300, progressive: 248, code: 368 }, savingsPct: 98.6, mode: 'progressive', codeExecution: false };
+  const max = Math.max(d.tokens.full, d.tokens.progressive, d.tokens.code, 1);
+  const row = (label, n) => `<div class="r"><span>${label}</span><span><b style="width:${Math.max(1, (n / max) * 100)}%"></b></span><span class="n">${n.toLocaleString()} tok</span></div>`;
+  return `${demoNote()}
+    <div><h2>Tool access</h2><p class="sub">How agents reach tools. Full MCP loads every tool definition into every prompt. Progressive gives agents four small tools (search_tools, call_tool, list_skills, load_skill) and loads definitions only when searched. Code execution lets an agent write a short script that calls many tools and returns only the result, so large intermediate data never enters the prompt.</p></div>
+    <div class="seg" role="group" data-pol-key="toolAccess"><button type="button" data-pol-val="full" aria-pressed="${d.mode === 'full'}">Full MCP</button><button type="button" data-pol-val="progressive" aria-pressed="${d.mode === 'progressive'}">Progressive</button><button type="button" data-pol-val="code" aria-pressed="${d.mode === 'code'}">Code execution</button></div>
+    <div><h3>Prompt cost of tool definitions · ${d.mcpTools} MCP tools</h3><div class="tok-bars">${row('Full MCP', d.tokens.full)}${row('Progressive', d.tokens.progressive)}${row('Code execution', d.tokens.code)}</div><p class="sub" style="margin-top:6px">Progressive saves ${d.savingsPct}% of the tool-definition tokens on every request (estimate: 4 characters per token).</p></div>
+    <div class="pol"><span class="l">Code execution</span><span class="h">Runs model-written JavaScript in a child process with Node's permission model (no file system or child processes), an empty environment, a 128 MB memory cap and time limits. The script reaches the host only through the tools object. This is a strong restriction, not a hardened sandbox.</span><label class="check"><input type="checkbox" data-pol-bool="codeExecution"${d.codeExecution ? ' checked' : ''}> Allow agents to run code</label></div>
+    ${d.codeExecution ? `<div><h3>Try it</h3><textarea id="code-in" rows="6">const found = await tools.search('keyword ideas', 2);\nconst res = await tools.call(found[0].name, { query: 'sell my house fast' });\nconsole.log('rows returned:', Array.isArray(res.rows) ? res.rows.length : 'n/a');\nreturn { tool: found[0].name, sample: JSON.stringify(res).slice(0, 200) };</textarea><div class="form-row" style="margin-top:6px"><button type="button" class="btn primary" data-act="run-code">Run</button></div>${S.sec.codeOut ? `<pre class="codeout">${esc(JSON.stringify(S.sec.codeOut, null, 2))}</pre>` : ''}</div>` : ''}
+    <div><h3>Skills · ${d.skills.length}</h3><p class="sub">Written procedures in skills/&lt;name&gt;/SKILL.md. Agents see one line per skill and load the full text only when it matches the task.</p><div class="list">${d.skills.map((k) => `<div class="item click" data-skill="${esc(k.name)}"><span class="sev low">skill</span><span class="t">${esc(k.name)}</span><span class="d">${esc(k.description)}</span></div>`).join('')}</div>${S.sec.skill ? `<pre class="codeout" style="margin-top:8px">${esc(S.sec.skill)}</pre>` : ''}</div>
+    <div class="pol"><span class="l">nl command-line tool</span><span class="h">The CLI-first route: shell-based agents and people run the platform without an MCP server.</span><pre class="codeout">npm run build
+node dist/cli.js security status
+node dist/cli.js dmarc example.com
+node dist/cli.js email suspicious.eml
+node dist/cli.js ask "which crops suit clay soil?"</pre></div>`;
+}
+
+$('#sec-body').addEventListener('click', async (e) => {
+  const t = e.target;
+  const go = t.closest('[data-go]'); if (go) { secGo(go.dataset.go); return; }
+  const inc = t.closest('[data-inc]'); if (inc) { S.sec.incident = inc.dataset.inc; renderSecurity(); return; }
+  const sk = t.closest('[data-skill]'); if (sk) { if (!needLive('Reading skills')) return; try { S.sec.skill = (await api(`${SEC}/skills/${encodeURIComponent(sk.dataset.skill)}`)).content; renderSecurity(); } catch (err) { toast(err.message, true); } return; }
+  const pv = t.closest('[data-pol-val]');
+  if (pv) {
+    const key = pv.closest('[data-pol-key]').dataset.polKey;
+    if (!needLive('Changing policy')) return;
+    try { await api(SEC + '/policy', { method: 'PUT', body: { [key]: pv.dataset.polVal } }); toast('Policy saved'); renderSecurity(); } catch (err) { toast(err.message, true); }
+    return;
+  }
+  const act = t.closest('[data-act]')?.dataset.act;
+  const clear = t.closest('[data-clear]'), iv = t.closest('[data-iv]'), st = t.closest('[data-st]'), rt = t.closest('[data-retriage]'), rel = t.closest('[data-release]');
+  if (!act && !clear && !iv && !st && !rt && !rel) return;
+  if (act === 'email-sample') { $('#email-raw').value = SAMPLE_EMAIL; return; }
+  if (act === 'email' && !S.live) { S.sec.email = { raw: $('#email-raw').value || SAMPLE_EMAIL, report: EXAMPLE_EMAIL_REPORT }; renderSecurity(); return; }
+  if (!needLive('This action')) return;
+  const btn = t.closest('button'); if (btn) btn.disabled = true;
+  try {
+    if (act === 'review') { const r = await api(SEC + '/incidents/review', { method: 'POST', body: {} }); toast(`Review done: ${r.opened} new, ${r.updated} updated`); refreshSecBadges(); }
+    else if (act === 'scan-text') { const r = await api(SEC + '/scan-text', { method: 'POST', body: { text: $('#dlp-text').value } }); $('#dlp-out').textContent = r.findings.length ? r.findings.map((f) => `${f.severity} ${f.type} (${f.preview})`).join(' · ') : 'Nothing flagged.'; if (btn) btn.disabled = false; return; }
+    else if (act === 'save-deny') {
+      const toolDeny = {};
+      for (const line of $('#pol-deny').value.split('\n')) { const m = line.match(/^\s*([A-Za-z_-]+)\s*:\s*(.+)$/); if (m) toolDeny[m[1].toUpperCase()] = m[2].split(',').map((x) => x.trim()).filter(Boolean); }
+      await api(SEC + '/policy', { method: 'PUT', body: { toolDeny } }); toast('Tool rules saved');
+    }
+    else if (act === 'email') { const raw = $('#email-raw').value; const report = await api(SEC + '/email', { method: 'POST', body: { raw, ai: $('#email-ai').checked } }); S.sec.email = { raw, report }; refreshSecBadges(); }
+    else if (act === 'dmarc') { S.sec.dmarc = await api(SEC + '/dmarc/check', { method: 'POST', body: { domain: $('#dmarc-domain').value } }); }
+    else if (act === 'dmarc-report') { S.sec.report = await api(SEC + '/dmarc/report', { method: 'POST', body: { xml: $('#dmarc-xml').value } }); }
+    else if (act === 'save-behavior') {
+      const thresholds = {}, auto = {};
+      $$('[data-th]').forEach((i) => { thresholds[i.dataset.th] = Number(i.value); });
+      $$('[data-auto]').forEach((i) => { auto[i.dataset.auto] = i.checked; });
+      await api(SEC + '/behavior', { method: 'PUT', body: { thresholds, auto } }); toast('Thresholds saved');
+    }
+    else if (act === 'gov-search') { S.sec.govQ = $('#gov-q').value; S.sec.govKind = $('#gov-kind').value; }
+    else if (act === 'gov-retention') { await api(SEC + '/governance', { method: 'PUT', body: { retentionDays: Number($('#gov-days').value) } }); toast('Retention saved'); }
+    else if (act === 'gov-apply') { const r = await api(SEC + '/governance/retention', { method: 'POST', body: {} }); toast(`Removed ${r.removed} record(s); ${r.keptOnHold} kept on hold`); }
+    else if (act === 'hold') { await api(SEC + '/governance/holds', { method: 'POST', body: { name: $('#hold-name').value, terms: $('#hold-terms').value } }); toast('Legal hold placed'); }
+    else if (act === 'run-code') { S.sec.codeOut = await api(SEC + '/tools/run-code', { method: 'POST', body: { code: $('#code-in').value } }); }
+    else if (clear) { await api(SEC + '/behavior/clear', { method: 'POST', body: { actor: clear.dataset.clear } }); toast('Intervention cleared'); }
+    else if (iv) { const [actor, level] = iv.dataset.iv.split('|'); await api(SEC + '/behavior/intervene', { method: 'POST', body: { actor, level, reason: 'Set manually from the IDE' } }); toast(`${level} applied to ${actor}`); }
+    else if (st) { const [id, status] = st.dataset.st.split('|'); await api(`${SEC}/incidents/${id}/status`, { method: 'POST', body: { status } }); refreshSecBadges(); }
+    else if (rt) { await api(`${SEC}/incidents/${rt.dataset.retriage}/triage`, { method: 'POST', body: {} }); toast('Triage updated'); }
+    else if (rel) { await api(`${SEC}/governance/holds/${rel.dataset.release}`, { method: 'DELETE' }); toast('Hold released'); }
+    renderSecurity();
+  } catch (err) { toast(err.message, true); if (btn) btn.disabled = false; }
+});
+$('#sec-body').addEventListener('change', async (e) => {
+  const b = e.target.closest('[data-pol-bool]');
+  if (b) {
+    if (!needLive('Changing policy')) { b.checked = !b.checked; return; }
+    try { await api(SEC + '/policy', { method: 'PUT', body: { [b.dataset.polBool]: b.checked } }); toast('Policy saved'); renderSecurity(); } catch (err) { toast(err.message, true); b.checked = !b.checked; }
+    return;
+  }
+  if (e.target.id === 'dmarc-file' && e.target.files[0]) { const r = new FileReader(); r.onload = () => { $('#dmarc-xml').value = String(r.result); }; r.readAsText(e.target.files[0]); }
+});
+
+/* ── EVE ── */
+const EVE = '/ide/api/assistant';
+S.eve = { type: '', q: '', history: [], entities: [], notifs: [], status: null, es: null, sending: false };
+const TYPE_LABEL = { llc: 'LLCs', client: 'Clients', project: 'Projects', person: 'People', prospect: 'Prospects', deadline: 'Deadlines', booking: 'Bookings', note: 'Notes' };
+function eveExample() {
+  const d = (days) => new Date(Date.now() + days * 86400000).toISOString();
+  return {
+    history: [
+      { at: d(-0.01), message: { role: 'user', content: 'Client Marco Ruiz (marco@ruizdev.com) needs the Oak Street renovation proposal by Dec 3. Habitaculum LLC is my real estate company.' } },
+      { at: d(-0.009), model: 'anthropic:claude-opus-5-5', message: { role: 'assistant', text: 'Got it. I saved Habitaculum LLC, Marco Ruiz as a client, the Oak Street renovation project and the proposal deadline. I will remind you a week before, the day before and on the day.' }, remembered: [{ type: 'llc', name: 'Habitaculum LLC' }, { type: 'client', name: 'Marco Ruiz' }, { type: 'deadline', name: 'Oak Street renovation proposal' }] },
+    ],
+    entities: [
+      { id: 'e1', type: 'llc', name: 'Habitaculum LLC', facts: [{ text: 'Real estate company' }], related: [] },
+      { id: 'e2', type: 'client', name: 'Marco Ruiz', email: 'marco@ruizdev.com', facts: [{ text: 'Booked a call for Thursday 10:00' }], related: [{ id: 'e3', rel: 'project' }] },
+      { id: 'e3', type: 'project', name: 'Oak Street renovation', facts: [{ text: 'Renovation proposal for Marco Ruiz' }], related: [] },
+      { id: 'e4', type: 'deadline', name: 'Oak Street renovation proposal', dueAt: d(6), status: 'open', facts: [], related: [] },
+      { id: 'e5', type: 'prospect', name: 'Dana Lee', email: 'dana@brightline.capital', status: 'open', facts: [{ text: 'Brightline Capital; replied to intro email' }], related: [] },
+    ],
+    notifs: [
+      { id: 'n1', kind: 'prospect_reply', title: 'Dana Lee replied', body: 'Re: intro — from dana@brightline.capital', at: d(-0.02), read: false, delivered: {} },
+      { id: 'n2', kind: 'booking', title: 'New booking: Marco Ruiz', body: 'Thursday 10:00–10:30', at: d(-0.2), read: false, delivered: {} },
+      { id: 'n3', kind: 'deadline_soon', title: 'Due in 6 days: Oak Street renovation proposal', body: 'For Marco Ruiz', at: d(-0.3), read: true, delivered: {} },
+    ],
+    status: { webhook: { path: '/assistant/events', secretConfigured: false }, lindy: { outbound: false }, watch: {} },
+  };
+}
+async function loadEve() {
+  if (!S.live) { Object.assign(S.eve, eveExample()); renderEve(); return; }
+  try {
+    const [h, m, n, st] = await Promise.all([api(EVE + '/chat'), api(`${EVE}/memory?type=${S.eve.type}&q=${encodeURIComponent(S.eve.q)}`), api(EVE + '/notifications'), api(EVE + '/status')]);
+    S.eve.history = h.history; S.eve.entities = m.entities; S.eve.summary = m.summary; S.eve.notifs = n.notifications; S.eve.status = st;
+    renderEve(); openEveStream();
+  } catch (err) { toast('Could not load EVE: ' + err.message, true); }
+}
+function openEveStream() {
+  if (S.eve.es || !S.live || typeof EventSource === 'undefined') return;
+  const es = new EventSource(`${S.base}${EVE}/notifications/stream`);
+  const onNote = (ev, created) => {
+    let n; try { n = JSON.parse(ev.data); } catch { return; }
+    const i = S.eve.notifs.findIndex((x) => x.id === n.id);
+    if (i >= 0) S.eve.notifs[i] = n;
+    else { S.eve.notifs.unshift(n); if (created) toast(`EVE: ${n.title}`); }
+    eveBadge(); if (S.surface === 'eve') renderEveSide();
+  };
+  es.addEventListener('notification', (ev) => onNote(ev, true));
+  es.addEventListener('notification.updated', (ev) => onNote(ev, false));
+  es.onerror = () => { es.close(); S.eve.es = null; setTimeout(openEveStream, 10_000); };
+  S.eve.es = es;
+}
+function eveBadge() {
+  const unread = S.eve.notifs.filter((n) => !n.read).length;
+  $('#eve-count').hidden = !unread; $('#eve-count').textContent = unread;
+  $('#eve-unread').hidden = !unread; $('#eve-unread').textContent = unread;
+}
+function renderEve() { renderEveThread(); renderEveSide(); eveBadge(); }
+function renderEveThread() {
+  const el = $('#eve-thread');
+  if (!S.eve.history.length) { el.innerHTML = `<div class="empty" style="padding:0;max-width:60ch">EVE keeps a lasting memory of your LLCs, clients, projects, prospects and deadlines, and watches for bookings, approaching deadlines and prospect replies. Tell her about your business to start, for example: “Habitaculum LLC is my real estate company. Client Marco Ruiz needs the Oak Street proposal by Dec 3.”</div>`; return; }
+  el.innerHTML = (S.live ? '' : '<div class="callout">Example conversation. Start neural-link to talk to EVE.</div>') + S.eve.history.map((t) => {
+    const m = t.message;
+    if (m.role === 'user') return `<div class="me">${esc(m.content)}</div>`;
+    const rem = (t.remembered || []).filter((r, i, a) => a.findIndex((x) => x.type === r.type && x.name === r.name) === i);
+    return `<div class="her"><div class="b">${esc(m.text || '')}</div>${rem.length ? `<div class="chipset">${rem.map((r) => `<span class="chip">remembered ${esc(r.type)}: ${esc(r.name)}</span>`).join('')}</div>` : ''}<div class="m">${t.model ? esc(t.model) : 'memory only'} · ${when(t.at)}</div></div>`;
+  }).join('');
+  el.scrollTop = el.scrollHeight;
+}
+function renderEveSide() {
+  $('#eve-notifs').innerHTML = S.eve.notifs.slice(0, 20).map((n) => `<div class="notif ${esc(n.kind)}${n.read ? ' read' : ''}"><span class="t">${esc(n.title)}</span>${n.body ? `<span class="d">${esc(n.body)}</span>` : ''}<span class="w">${when(n.at)}${n.delivered?.lindy === 'sent' ? ' · sent to Lindy' : ''}</span></div>`).join('') || '<div class="empty" style="padding:0">Nothing yet. Bookings, deadlines and prospect replies appear here.</div>';
+  const types = Object.keys(TYPE_LABEL);
+  $('#eve-types').innerHTML = `<button type="button" data-et="" aria-pressed="${!S.eve.type}">All</button>` + types.map((t) => `<button type="button" data-et="${t}" aria-pressed="${S.eve.type === t}">${TYPE_LABEL[t]}</button>`).join('');
+  const ents = S.live ? S.eve.entities : S.eve.entities.filter((e) => (!S.eve.type || e.type === S.eve.type) && (!S.eve.q || e.name.toLowerCase().includes(S.eve.q.toLowerCase())));
+  $('#eve-mem-count').textContent = `${ents.length} item${ents.length === 1 ? '' : 's'}`;
+  $('#eve-mem').innerHTML = ents.slice(0, 60).map((e) => `<div class="ent"><div class="h"><span class="k">${esc(e.type)}</span><span class="n">${esc(e.name)}</span>${e.status ? `<span class="sev ${e.status === 'done' || e.status === 'won' ? 'ok' : e.status === 'open' ? 'medium' : 'low'}">${esc(e.status)}</span>` : ''}${e.review ? '<span class="sev high">review</span>' : ''}</div>
+    ${e.email ? `<span class="x" style="font:11px var(--font-code);color:var(--text-3)">${esc(e.email)}</span>` : ''}${e.dueAt ? `<span class="due">due ${new Date(e.dueAt).toLocaleDateString()} (${untilText(e.dueAt)})</span>` : ''}
+    ${e.facts?.length ? `<ul>${e.facts.slice(-3).map((f) => `<li>${esc(f.text)}</li>`).join('')}</ul>` : ''}
+    ${e.type === 'deadline' && e.status === 'open' ? `<div class="form-row"><button type="button" class="mini" data-done="${esc(e.id)}">Mark done</button></div>` : ''}</div>`).join('') || '<div class="empty" style="padding:0">No memories match.</div>';
+  const st = S.eve.status;
+  $('#eve-watch').innerHTML = st ? `<div class="kv"><span>Deadline checks</span><span>every minute (7 days, 1 day, due, overdue)</span><span>Inbound events</span><span>${st.webhook.secretConfigured ? `POST ${esc(S.base || location.origin)}${esc(st.webhook.path)}` : 'add ASSISTANT_WEBHOOK_SECRET under Environment'}</span><span>Alerts to Lindy</span><span>${st.lindy.outbound ? 'on' : 'add LINDY_WEBHOOK_URL'}</span></div>
+    <pre class="codeout" style="margin-top:8px">// Zapier, Make, Lindy or Calendly → EVE
+POST ${esc(S.base || 'http://localhost:3001')}/assistant/events
+Authorization: Bearer &lt;ASSISTANT_WEBHOOK_SECRET&gt;
+{ "type": "booking.created", "email": "marco@ruizdev.com",
+  "name": "Marco Ruiz", "start": "2026-12-01T10:00:00Z" }
+// also: email.reply, prospect.reply, deadline.set, note</pre>` : '';
+}
+$('#eve-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = $('#eve-in').value.trim(); if (!msg || S.eve.sending) return;
+  if (!needLive('Talking to EVE')) return;
+  S.eve.sending = true; $('#eve-note').textContent = 'EVE is thinking…';
+  S.eve.history.push({ at: new Date().toISOString(), message: { role: 'user', content: msg } }); renderEveThread(); $('#eve-in').value = '';
+  try {
+    const r = await api(EVE + '/chat', { method: 'POST', body: { message: msg } });
+    S.eve.history.push({ at: new Date().toISOString(), model: r.model, remembered: r.remembered, message: { role: 'assistant', text: r.reply } });
+    $('#eve-note').textContent = r.note || '';
+    renderEveThread();
+    const m = await api(`${EVE}/memory?type=${S.eve.type}&q=${encodeURIComponent(S.eve.q)}`); S.eve.entities = m.entities; renderEveSide();
+  } catch (err) { toast(err.message, true); $('#eve-note').textContent = ''; }
+  S.eve.sending = false;
+});
+$('#eve-in').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#eve-form').requestSubmit(); } });
+$('#eve-types').addEventListener('click', (e) => { const b = e.target.closest('[data-et]'); if (!b) return; S.eve.type = b.dataset.et; S.live ? loadEve() : renderEveSide(); });
+let eveQTimer; $('#eve-q').addEventListener('input', (e) => { S.eve.q = e.target.value; clearTimeout(eveQTimer); eveQTimer = setTimeout(() => (S.live ? loadEve() : renderEveSide()), 250); });
+$('#eve-mem').addEventListener('click', async (e) => {
+  const d = e.target.closest('[data-done]'); if (!d || !needLive('Updating memory')) return;
+  try { await api(`${EVE}/memory/${d.dataset.done}/status`, { method: 'POST', body: { status: 'done' } }); toast('Marked done'); loadEve(); } catch (err) { toast(err.message, true); }
+});
+$('#eve-readall').addEventListener('click', async () => {
+  if (!needLive('Marking notifications')) return;
+  try { await api(EVE + '/notifications/read', { method: 'POST', body: { id: 'all' } }); S.eve.notifs.forEach((n) => { n.read = true; }); renderEveSide(); eveBadge(); } catch (err) { toast(err.message, true); }
+});
+
+/* ── Engineering ── */
+const ENG = '/ide/api/engineering';
+S.eng = { projects: [], sel: null, project: null, es: null, series: {}, sf: {}, alerts: [], creating: false };
+function engExample() {
+  const comps = [{ componentId: 'c1', name: 'Wall bracket arm', sf: 2.62, maxStressMPa: 135.5, deflectionMm: 1.55, tempC: 60, tempMarginC: 290, status: 'ok', messages: [] }];
+  const nodes = ['INTENT', 'ARCHITECT', 'LOADS', 'MORTEX', 'GEOMETRY', 'FEA', 'THERMAL', 'FATIGUE', 'TOLERANCE', 'MANUFACTURING', 'COST', 'MASS', 'SENTINEL', 'COMPLIANCE-DOCS', 'TELEMETRY', 'REPORT'].map((id, i) => ({ id, name: id, status: 'done', ms: 2 + i, summary: { MORTEX: 'S355 structural steel: best mass/cost balance at 60 °C', GEOMETRY: 'RHS 25×25×2 mm after 4 iterations (SF 2.62 ≥ 2.0)', FEA: '20-element Euler–Bernoulli beam: σmax 135.5 MPa, tip deflection 1.55 mm', SENTINEL: 'No violations across 10 rules', THERMAL: 'Margin 290 °C to max service temperature' }[id] || 'Done' }));
+  return { id: 'eng_example', goal: 'A wall-mounted steel bracket that holds a 40 kg motor at 60 °C, 300 mm reach', planSource: 'rules', plan: { summary: 'One cantilever bracket, 392 N at the tip with a 1.5 dynamic factor, 60 °C ambient.', components: [{ id: 'c1', name: 'Wall bracket arm' }], requirements: { targetSafetyFactor: 2 } }, swarm: { nodes, ms: 42 }, designs: [{ componentId: 'c1', materialName: 'S355 structural steel', dims: 'RHS 25×25×2 mm', massKg: 0.43, process: 'Cut, weld, powder coat' }], compliance: { compliant: true, findings: [], references: [{ standard: 'EN 1993-1-1 (Eurocode 3)', scope: 'Steel members' }, { standard: 'ISO 12100', scope: 'Risk assessment' }] }, verification: { overall: 'ok', targetSafetyFactor: 2, components: comps }, telemetry: { running: false, simulated: true, channels: [{ channel: 'c1.load', kind: 'load', unit: 'N', nominal: 392 }, { channel: 'c1.temp', kind: 'temperature', unit: '°C', nominal: 60 }, { channel: 'c1.strain', kind: 'strain', unit: 'µε', nominal: 640 }] }, alerts: [], report: { text: 'The bracket meets the 2.0 safety factor with S355 RHS 25×25×2. Stress concentrations at the weld toe are not modelled; review the welded joint before release.' } };
+}
+async function loadEngineering() {
+  if (!S.live) { const p = engExample(); S.eng.projects = [{ id: p.id, goal: p.goal, overall: 'ok', compliant: true, openAlerts: 0, running: false }]; S.eng.sel = p.id; S.eng.project = p; renderEngineering(); return; }
+  try { S.eng.projects = (await api(ENG + '/projects')).projects; if (!S.eng.sel && S.eng.projects[0]) S.eng.sel = S.eng.projects[0].id; await loadEngProject(); renderEngineering(); } catch (err) { toast('Could not load engineering: ' + err.message, true); }
+}
+async function loadEngProject() {
+  if (!S.eng.sel || !S.live) return;
+  S.eng.project = await api(`${ENG}/projects/${S.eng.sel}`);
+  openEngStream();
+}
+function openEngStream() {
+  if (S.eng.es) { S.eng.es.close(); S.eng.es = null; }
+  S.eng.series = {}; S.eng.sf = {}; S.eng.alerts = [];
+  if (!S.live || !S.eng.sel || typeof EventSource === 'undefined') return;
+  const es = new EventSource(`${S.base}${ENG}/projects/${S.eng.sel}/stream`);
+  es.onmessage = (ev) => {
+    let d; try { d = JSON.parse(ev.data); } catch { return; }
+    if (d.type === 'sample') for (const smp of d.samples) { (S.eng.series[smp.channel] ??= []).push(smp.value); if (S.eng.series[smp.channel].length > 120) S.eng.series[smp.channel].shift(); }
+    if (d.type === 'verification') { for (const c of d.report.components) { (S.eng.sf[c.componentId] ??= []).push(c.sf); if (S.eng.sf[c.componentId].length > 120) S.eng.sf[c.componentId].shift(); } if (S.eng.project) S.eng.project.telemetry.lastVerification = d.report; }
+    if (d.type === 'alert') { S.eng.alerts.unshift(d.alert); toast(`SENTINEL: ${d.alert.message}`, d.alert.severity === 'fail'); }
+    if (d.type === 'status' && S.eng.project) { S.eng.project.telemetry.running = d.running; }
+    if (S.surface === 'engineering') drawTelemetry();
+  };
+  S.eng.es = es;
+}
+function renderEngineering() {
+  $('#eng-nav').innerHTML = `<button type="button" data-ep="new" aria-pressed="${S.eng.sel === 'new'}">+ New project</button>` + S.eng.projects.map((p) => `<button type="button" data-ep="${esc(p.id)}" aria-pressed="${S.eng.sel === p.id}" title="${esc(p.goal)}"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.goal)}</span>${p.openAlerts ? `<span class="n">${p.openAlerts}</span>` : ''}</button>`).join('');
+  const body = $('#eng-body');
+  if (S.eng.sel === 'new' || !S.eng.project) {
+    body.innerHTML = `<div class="pane">${demoNote()}<div><h2>Intent-driven engineering</h2><p class="sub">Describe what you need in plain language. AXIOM turns it into an architecture plan, a 16-node specialist swarm sizes and checks every component (MORTEX picks materials, SENTINEL checks safety), and each design is verified with beam FEA and thermal checks before anything is built. Then stream sensor data to keep verifying it live.</p></div>
+      <textarea id="eng-goal" rows="4" placeholder="e.g. A wall-mounted steel bracket that holds a 40 kg motor at 60 °C with a 300 mm reach"></textarea>
+      <div class="form-row"><label class="check">Safety factor <input type="number" id="eng-sf" value="2" min="1" max="10" step="0.1" style="width:70px"></label><label class="check">Optimize for <select id="eng-pri"><option value="balanced">balanced</option><option value="mass">mass</option><option value="cost">cost</option></select></label><span class="grow"></span><button type="button" class="btn primary" data-eact="create">${S.eng.creating ? 'Planning…' : 'Plan and verify'}</button></div></div>`;
+    return;
+  }
+  const p = S.eng.project;
+  const ver = p.telemetry.lastVerification || p.verification;
+  const target = ver.targetSafetyFactor || p.plan.requirements.targetSafetyFactor;
+  body.innerHTML = `<div class="pane">${demoNote()}
+    <div><h2>${esc(p.goal)} <span class="sev ${ver.overall}">${esc(ver.overall)}</span>${p.compliance.compliant ? '<span class="sev ok">SENTINEL: compliant</span>' : '<span class="sev fail">SENTINEL: findings</span>'}</h2>
+    <p class="sub">${esc(p.plan.summary)} · planned by ${p.planSource === 'llm' ? esc(p.planModel || 'LLM') : 'rules (no model configured)'} · swarm ${p.swarm.ms} ms</p></div>
+    <div><h3>Specialist swarm · ${p.swarm.nodes.length} nodes</h3><div class="pol-grid" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr))">${p.swarm.nodes.map((n) => `<div class="pol" style="gap:4px;padding:8px 10px"><div class="form-row"><span class="sev ${n.status === 'done' ? 'ok' : n.status}">${esc(n.status)}</span><span class="l" style="font:600 11.5px var(--font-code)">${esc(n.id)}</span><span class="grow"></span><span class="h" style="font:10.5px var(--font-code)">${n.ms} ms</span></div><span class="h">${esc(typeof n.summary === 'string' ? n.summary : '')}</span></div>`).join('')}</div></div>
+    <div><h3>Components</h3><div class="tbl-wrap"><table class="stats"><thead><tr><th>Component</th><th>Material</th><th>Section</th><th>Safety factor</th><th>Peak stress</th><th>Deflection</th><th>Temp margin</th><th>Status</th></tr></thead><tbody>${ver.components.map((c) => { const d = p.designs.find((x) => x.componentId === c.componentId) || {}; return `<tr><td>${esc(c.name)}</td><td>${esc(d.materialName || '')}</td><td>${esc(d.dims || '')}</td><td style="color:${c.sf < 1 ? 'var(--err)' : c.sf < target ? 'var(--warn)' : 'var(--ok)'}">${c.sf.toFixed(2)} / ${target}</td><td>${c.maxStressMPa.toFixed(1)} MPa</td><td>${c.deflectionMm.toFixed(2)} mm</td><td>${Math.round(c.tempMarginC)} °C</td><td>${sevPill(c.status === 'ok' ? 'ok' : c.status)}</td></tr>`; }).join('')}</tbody></table></div></div>
+    <div><h3>Live verification <span id="eng-live" style="font:11px var(--font-code);color:var(--text-3);letter-spacing:0;text-transform:none"></span></h3>
+      <div class="form-row"><button type="button" class="btn ${p.telemetry.running ? '' : 'primary'}" data-eact="sim">${p.telemetry.running ? 'Stop telemetry simulator' : 'Start telemetry simulator'}</button><span class="sub">Simulated samples are labelled. Real sensors can post readings to POST ${esc(S.base || '')}${ENG}/projects/${esc(p.id)}/telemetry.</span></div>
+      <div class="pol-grid" id="eng-charts" style="margin-top:10px"></div></div>
+    <div class="two"><div><h3>Alerts</h3><div class="list" id="eng-alerts"></div></div>
+    <div><h3>Compliance references</h3><div class="list">${(p.compliance.references || []).map((r) => `<div class="item"><span class="sev low">ref</span><span class="t">${esc(r.standard)}</span><span class="d">${esc(r.scope || '')}${r.note ? ` · ${esc(r.note)}` : ''}</span></div>`).join('')}${p.compliance.findings.map((f) => `<div class="item"><span class="sev ${f.severity === 'fail' ? 'fail' : f.severity === 'warn' ? 'warn' : 'low'}">${esc(f.severity)}</span><span class="t">${esc(f.rule)}</span><span class="d">${esc(f.message)}</span></div>`).join('')}</div></div></div>
+    <div><h3>Report</h3><div class="summary">${esc(p.report.text)}</div></div>
+    <div class="form-row"><button type="button" class="btn danger" data-eact="delete">Delete project</button></div></div>`;
+  drawTelemetry();
+}
+function spark(values, { color = '#38c8f0', lines = [], min, max } = {}) {
+  const c = document.createElement('canvas'); const W = 320, H = 70, dpr = window.devicePixelRatio || 1;
+  c.width = W * dpr; c.height = H * dpr; c.style.width = '100%'; c.style.height = H + 'px';
+  const g = c.getContext('2d'); g.scale(dpr, dpr);
+  const all = [...values, ...lines.map((l) => l.v)];
+  const lo = min ?? Math.min(...all), hi = max ?? Math.max(...all);
+  const span = hi - lo || 1;
+  const y = (v) => H - 6 - ((v - lo) / span) * (H - 12);
+  g.strokeStyle = 'rgba(255,255,255,.06)'; g.lineWidth = 1;
+  for (let i = 1; i < 4; i++) { g.beginPath(); g.moveTo(0, (H / 4) * i); g.lineTo(W, (H / 4) * i); g.stroke(); }
+  for (const l of lines) { g.strokeStyle = l.color; g.setLineDash([4, 4]); g.beginPath(); g.moveTo(0, y(l.v)); g.lineTo(W, y(l.v)); g.stroke(); g.setLineDash([]); }
+  if (values.length > 1) {
+    g.strokeStyle = color; g.lineWidth = 1.6; g.beginPath();
+    values.forEach((v, i) => { const x = (i / (values.length - 1)) * W; i ? g.lineTo(x, y(v)) : g.moveTo(x, y(v)); });
+    g.stroke();
+    const lx = W, ly = y(values[values.length - 1]); g.fillStyle = color; g.beginPath(); g.arc(lx - 2, ly, 3, 0, Math.PI * 2); g.fill();
+  }
+  return c;
+}
+function drawTelemetry() {
+  const host = $('#eng-charts'); if (!host || !S.eng.project) return;
+  const p = S.eng.project;
+  const target = (p.telemetry.lastVerification || p.verification).targetSafetyFactor || 2;
+  host.innerHTML = '';
+  const card = (title, latest, canvas, note) => { const d = document.createElement('div'); d.className = 'pol'; d.innerHTML = `<div class="form-row"><span class="l">${esc(title)}</span><span class="grow"></span><span style="font:600 13px var(--font-code)">${esc(latest)}</span></div>`; d.appendChild(canvas); if (note) { const n = document.createElement('span'); n.className = 'h'; n.textContent = note; d.appendChild(n); } host.appendChild(d); };
+  for (const comp of (p.telemetry.lastVerification || p.verification).components) {
+    const vals = S.eng.sf[comp.componentId] || [comp.sf];
+    card(`${comp.name} · safety factor`, vals[vals.length - 1].toFixed(2), spark(vals, { color: '#3fc98a', min: 0, lines: [{ v: target, color: 'rgba(232,176,74,.8)' }, { v: 1, color: 'rgba(240,97,109,.9)' }] }), `Amber: target ${target}. Red: yield (SF 1). Recomputed with beam FEA on every reading.`);
+  }
+  for (const ch of p.telemetry.channels) {
+    const vals = S.eng.series[ch.channel] || [];
+    card(`${ch.channel} (${ch.kind})`, vals.length ? `${vals[vals.length - 1].toFixed(1)} ${ch.unit}` : '—', spark(vals.length ? vals : [ch.nominal], { color: ch.kind === 'temperature' ? '#f0843a' : '#38c8f0', lines: [{ v: ch.nominal, color: 'rgba(255,255,255,.25)' }] }), `Nominal ${ch.nominal} ${ch.unit}`);
+  }
+  const alerts = [...S.eng.alerts, ...(p.alerts || [])].filter((a, i, arr) => arr.findIndex((x) => x.id === a.id) === i).slice(0, 15);
+  $('#eng-alerts').innerHTML = alerts.map((a) => `<div class="item"><span class="sev ${a.severity === 'fail' ? 'fail' : 'warn'}">${esc(a.severity)}</span><span class="t">${esc(a.message)}</span><span class="x">${when(a.at)}${a.simulated ? ' · simulated' : ''}${a.clearedAt ? ' · cleared' : ''}</span></div>`).join('') || '<div class="empty" style="padding:0">No alerts.</div>';
+  const live = $('#eng-live'); if (live) live.textContent = p.telemetry.running ? '· streaming' : '';
+}
+$('#eng-nav').addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-ep]'); if (!b) return;
+  S.eng.sel = b.dataset.ep;
+  if (S.eng.sel !== 'new' && S.live) { try { await loadEngProject(); } catch (err) { toast(err.message, true); } }
+  if (S.eng.sel === 'new') S.eng.project = null;
+  renderEngineering();
+});
+$('#eng-body').addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-eact]'); if (!b) return;
+  if (!needLive('Engineering projects')) return;
+  b.disabled = true;
+  try {
+    if (b.dataset.eact === 'create') {
+      S.eng.creating = true; b.textContent = 'Planning…';
+      const p = await api(ENG + '/projects', { method: 'POST', body: { goal: $('#eng-goal').value, targetSafetyFactor: Number($('#eng-sf').value), priority: $('#eng-pri').value } });
+      S.eng.creating = false; S.eng.sel = p.id; S.eng.project = p;
+      S.eng.projects = (await api(ENG + '/projects')).projects; openEngStream(); toast(`Planned and verified: ${p.verification.overall}`);
+    } else if (b.dataset.eact === 'sim') {
+      const on = !S.eng.project.telemetry.running;
+      await api(`${ENG}/projects/${S.eng.project.id}/simulate`, { method: 'POST', body: { on } });
+      S.eng.project.telemetry.running = on;
+    } else if (b.dataset.eact === 'delete') {
+      if (b.dataset.confirm !== '1') { b.dataset.confirm = '1'; b.textContent = 'Click again to delete'; b.disabled = false; return; }
+      await api(`${ENG}/projects/${S.eng.project.id}`, { method: 'DELETE' });
+      if (S.eng.es) { S.eng.es.close(); S.eng.es = null; }
+      S.eng.sel = null; S.eng.project = null; S.eng.projects = (await api(ENG + '/projects')).projects; S.eng.sel = S.eng.projects[0]?.id ?? 'new'; await loadEngProject();
+    }
+  } catch (err) { S.eng.creating = false; toast(err.message, true); }
+  b.disabled = false; renderEngineering();
+});
+setInterval(() => { if (S.live) refreshSecBadges(); }, 30_000);
+
 /* ── Panel ── */
 function showPanel(name) {
   $('#main').classList.remove('panel-hidden');
@@ -1830,6 +2471,11 @@ function openPalette(mode = 'files') {
     { label: 'Open Agent Manager', k: 'Ctrl E', run: () => setSurface('manager') },
     { label: 'Open Deployments', k: '', run: () => setSurface('deploy') },
     { label: 'Open Models and integrations', k: '', run: () => setSurface('models') },
+    { label: 'Open Security', k: '', run: () => setSurface('security') },
+    { label: 'Open EVE assistant', k: '', run: () => setSurface('eve') },
+    { label: 'Open Engineering', k: '', run: () => setSurface('engineering') },
+    { label: 'Analyze an email', k: '', run: () => { setSurface('security'); secGo('email'); } },
+    { label: 'Check a domain (DMARC)', k: '', run: () => { setSurface('security'); secGo('dmarc'); } },
     { label: 'Deploy preview (local)', k: '', run: () => deploy('local', 'preview') },
     { label: 'Deploy to production (local)', k: '', run: () => deploy('local', 'production') },
     { label: 'Deploy to Netlify', k: '', run: () => deploy('netlify', 'preview') },
@@ -1904,6 +2550,8 @@ async function boot() {
   S.tasks = []; S.details.clear(); S.deploys = []; S.depDetail = null; S.selDep = null; S.selTask = null;
   await loadTree(); renderAgents();
   await Promise.all([refreshTasks(true), refreshDeploys(true), loadLlm()]);
+  refreshSecBadges();
+  if (live) loadEve();
   if (!out.childElementCount) {
     log('Neural Link IDE · agent-first editor with deployments · type help', 'acc');
     log(live ? `connected to ${S.base || location.host}` : 'neural-link is not running, so you are looking at a source snapshot and example tasks and deployments.', live ? 'ok' : 'warn');

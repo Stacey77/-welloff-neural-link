@@ -5,6 +5,10 @@ import { AgentIdSchema } from '../types/index.js';
 import { LlmSession, type ChatMessage, type ToolSpec, type ToolResult } from '../llm/index.js';
 import { trigger as triggerLindy } from '../integrations/lindy.js';
 import { traced } from '../integrations/langsmith.js';
+import { getPolicy, restore, toolAllowed } from '../security/guardrails.js';
+import { requiresReview } from '../security/behavior.js';
+import { META_TOOLS, runMetaTool } from '../tools/progressive.js';
+import { RUN_CODE_TOOL, runCode } from '../tools/codeexec.js';
 import { DATA_DIR, listFiles, readSrc, readSrcOrEmpty, writeSrc, runTypecheck, readJson, writeJson, safePath } from './workspace.js';
 
 export type TaskStatus = 'running' | 'review' | 'done' | 'error' | 'cancelled';
@@ -84,7 +88,7 @@ How you work:
 3. Change code only through propose_edit, always sending the COMPLETE new file content. Match the existing style: ESM-style imports with .js extensions, 2-space indent, single quotes.
 4. Mark plan items done with update_plan as you finish them.
 5. When you changed TypeScript, call typecheck. Note: proposed edits are not on disk until the user accepts them, so typecheck reports the current disk state.
-6. You can run platform agents with dispatch_agent when the request needs their output.
+6. You can run platform agents with dispatch_agent when the request needs their output. Check list_skills for written procedures (for example write-an-agent) and load the ones that match.
 7. Finish with a concise summary: what changed, where, and anything the user should check.
 
 Keep edits focused on the request. Never touch files outside src/.`;
@@ -105,6 +109,7 @@ function short(s: string, n = 160): string {
 }
 
 async function runTool(t: IdeTask, name: string, input: Record<string, unknown>): Promise<string> {
+  if (!toolAllowed('IDE', name)) throw new Error(`The ${name} tool is denied for the IDE agent by security policy.`);
   switch (name) {
     case 'update_plan': {
       const items = Array.isArray(input.items) ? input.items : [];
@@ -121,7 +126,7 @@ async function runTool(t: IdeTask, name: string, input: Record<string, unknown>)
     }
     case 'propose_edit': {
       const path = String(input.path ?? '').replace(/^src\//, '');
-      const content = String(input.content ?? '');
+      const content = restore(String(input.content ?? ''));
       if (!safePath(path) || !path.endsWith('.ts')) throw new Error('Edits must target a .ts file inside src/.');
       const before = readSrcOrEmpty(path);
       const existing = t.artifacts.find((a): a is EditArtifact => a.kind === 'edit' && a.path === path && a.state === 'pending');
@@ -140,6 +145,13 @@ async function runTool(t: IdeTask, name: string, input: Record<string, unknown>)
       const r = await runTypecheck();
       return r.ok ? 'No type errors.' : r.problems.slice(0, 40).map((p) => `${p.file}:${p.line}:${p.col} ${p.code} ${p.message}`).join('\n');
     }
+    case 'search_tools':
+    case 'call_tool':
+    case 'list_skills':
+    case 'load_skill':
+      return JSON.stringify(await runMetaTool(name, input)).slice(0, 12_000);
+    case 'run_code':
+      return JSON.stringify(await runCode(String(input.code ?? ''), 'IDE')).slice(0, 12_000);
     case 'trigger_lindy':
       return JSON.stringify(await triggerLindy((input.payload as Record<string, unknown>) ?? {})).slice(0, 4_000);
     case 'dispatch_agent': {
@@ -180,7 +192,7 @@ async function execute(t: IdeTask): Promise<void> {
     touch(t);
     for (let i = 0; i < MAX_ITER; i++) {
       if (ctrl.signal.aborted) throw new Error('Cancelled');
-      const res = await session.turn({ system: SYSTEM, tools: TOOLS, messages, maxTokens: 16_000, signal: ctrl.signal });
+      const res = await session.turn({ system: SYSTEM, tools: [...TOOLS, ...META_TOOLS, ...(getPolicy().codeExecution ? [RUN_CODE_TOOL] : [])], messages, maxTokens: 16_000, signal: ctrl.signal });
       for (const a of res.attempts.filter((x) => !x.ok)) step(t, { kind: 'error', text: `Fell back from ${a.spec}`, detail: a.error });
       t.routedTo = res.spec;
       t.modelsUsed = [...session.used];
@@ -235,7 +247,7 @@ export function createTask(prompt: string, opts: { contextFile?: string; autoApp
     id: `task_${randomBytes(4).toString('hex')}`,
     prompt: prompt.trim(),
     contextFile: opts.contextFile && safePath(opts.contextFile) ? opts.contextFile : undefined,
-    autoApply: Boolean(opts.autoApply),
+    autoApply: Boolean(opts.autoApply) && !requiresReview('IDE'),
     status: 'running',
     model: typeof opts.model === 'string' && opts.model ? opts.model : 'auto',
     createdAt: Date.now(),

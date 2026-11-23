@@ -20,6 +20,10 @@ import { handle as genesis } from '../agents/GENESIS.js';
 import { handle as natura } from '../agents/NATURA.js';
 import { handle as maestro } from '../agents/MAESTRO.js';
 import { handle as lindy } from '../agents/LINDY.js';
+import { handle as eve } from '../agents/EVE.js';
+import { handle as axiom } from '../agents/AXIOM.js';
+import { handle as mortex } from '../agents/MORTEX.js';
+import { handle as sentinel } from '../agents/SENTINEL.js';
 
 const handlers: Record<string, (cmd: AgentCommand) => Promise<unknown>> = {
   ARIA: aria,
@@ -42,7 +46,15 @@ const handlers: Record<string, (cmd: AgentCommand) => Promise<unknown>> = {
   NATURA: natura,
   MAESTRO: maestro,
   LINDY: lindy,
+  EVE: eve,
+  AXIOM: axiom,
+  MORTEX: mortex,
+  SENTINEL: sentinel,
 };
+
+export function registeredAgents(): string[] {
+  return Object.keys(handlers);
+}
 
 export async function route(command: AgentCommand): Promise<unknown> {
   const handler = handlers[command.agentId];

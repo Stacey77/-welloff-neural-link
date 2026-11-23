@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { listMcpTools, callMcpTool } from '../connectors/mcp-client.js';
+import { platformTools, runPlatformTool } from '../tools/access.js';
 import { LlmSession, type ChatMessage, type ToolSpec } from '../llm/index.js';
 import { SYSTEM } from '../agents/TON.js';
 
@@ -18,11 +18,7 @@ export async function streamTon(req: Request, res: Response): Promise<void> {
   }
 
   try {
-    const tools: ToolSpec[] = (await listMcpTools()).map((t) => ({
-      name: t.name,
-      description: t.description,
-      input_schema: (t.inputSchema as Record<string, unknown>) ?? { type: 'object', properties: {} },
-    }));
+    const tools: ToolSpec[] = await platformTools();
     const session = new LlmSession('TON', message, typeof req.query.model === 'string' ? req.query.model : undefined);
     send({ type: 'route', model: session.decision.spec, reason: session.decision.reason });
     const messages: ChatMessage[] = [{ role: 'user', content: message }];
@@ -43,7 +39,7 @@ export async function streamTon(req: Request, res: Response): Promise<void> {
         r.toolCalls.map(async (call) => {
           send({ type: 'tool_use', name: call.name });
           try {
-            const out = JSON.stringify(await callMcpTool(call.name, call.input));
+            const out = JSON.stringify(await runPlatformTool(call.name, call.input, 'TON'));
             send({ type: 'tool_result', name: call.name, preview: out.slice(0, 120) });
             return { id: call.id, name: call.name, content: out };
           } catch (err) {

@@ -1,9 +1,9 @@
 import type { AgentCommand } from '../types/index.js';
-import { listMcpTools, callMcpTool } from '../connectors/mcp-client.js';
+import { platformTools, runPlatformTool } from '../tools/access.js';
 import { LlmSession, type ChatMessage, type ToolSpec } from '../llm/index.js';
 
 export const SYSTEM = `You are TON (Total Operations Navigator), the master orchestrator AI for the WellOff universal agent platform.
-You coordinate 17 specialized agents by calling their MCP tools directly:
+You coordinate 21 specialized agents by calling their MCP tools directly:
 
 REAL ESTATE:
 - ARIA: real estate leads, Meta Ads campaigns, lead enrichment, follow-up sequences
@@ -28,25 +28,27 @@ CLOUD & AS-A-SERVICE:
 SCIENCE:
 - NATURA: nature and life sciences: plants, animals, insects, ecology, climate
 
+ENGINEERING ORCHESTRATION:
+- AXIOM: turns an engineering goal into an architecture plan, runs a 16-node specialist swarm and verifies designs (FEA, thermal)
+- MORTEX: materials selection and prototyping
+- SENTINEL: safety and compliance checks on designs and live telemetry
+
+ASSISTANT:
+- EVE: remembers the owner's LLCs, clients, projects, prospects and deadlines; watches for bookings, deadlines and replies
+
 LLM CONDUCTOR:
 - MAESTRO: routes requests across many LLM providers, compares models, runs judged councils
 
 COGNITIVE CORE:
 - BRAIN: agentic reasoning, workflow planning, cross-domain synthesis, long-term memory, A2A orchestration
 
-Use the available tools to fulfill the user's request. Call multiple tools across agents if needed. Return a concise summary of what was accomplished.`;
+Find tools with search_tools and call them with call_tool (or, when available, run_code to chain several calls and return only the result). Check list_skills for written procedures that match the task. Use the available tools to fulfill the user's request. Call multiple tools across agents if needed. Return a concise summary of what was accomplished.`;
 
 export async function handle(command: AgentCommand): Promise<unknown> {
   const userMessage =
     typeof command.params?.message === 'string' ? command.params.message : command.command;
 
-  const mcpTools = await listMcpTools();
-
-  const tools: ToolSpec[] = mcpTools.map((t) => ({
-    name: t.name,
-    description: t.description,
-    input_schema: (t.inputSchema as Record<string, unknown>) ?? { type: 'object', properties: {} },
-  }));
+  const tools: ToolSpec[] = await platformTools();
 
   const session = new LlmSession('TON', userMessage, typeof command.params?.model === 'string' ? command.params.model : undefined);
   const messages: ChatMessage[] = [{ role: 'user', content: userMessage }];
@@ -61,7 +63,7 @@ export async function handle(command: AgentCommand): Promise<unknown> {
     const results = await Promise.all(
       r.toolCalls.map(async (call) => {
         try {
-          return { id: call.id, name: call.name, content: JSON.stringify(await callMcpTool(call.name, call.input)) };
+          return { id: call.id, name: call.name, content: JSON.stringify(await runPlatformTool(call.name, call.input, 'TON')) };
         } catch (err) {
           return { id: call.id, name: call.name, content: err instanceof Error ? err.message : String(err), isError: true };
         }

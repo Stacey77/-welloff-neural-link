@@ -3,12 +3,14 @@ import { z } from 'zod';
 export type AgentId =
   | 'ARIA' | 'DEVX' | 'TERRA' | 'CAPITA' | 'NOVA' | 'TON'
   | 'NEXUS' | 'FORGE' | 'ARCH' | 'VOLT' | 'MOTOR' | 'MESH'
-  | 'INFRA' | 'PLAT' | 'XAAS' | 'BRAIN' | 'GENESIS' | 'NATURA' | 'MAESTRO' | 'LINDY';
+  | 'INFRA' | 'PLAT' | 'XAAS' | 'BRAIN' | 'GENESIS' | 'NATURA' | 'MAESTRO' | 'LINDY' | 'EVE'
+  | 'AXIOM' | 'MORTEX' | 'SENTINEL';
 
 export const AgentIdSchema = z.enum([
   'ARIA', 'DEVX', 'TERRA', 'CAPITA', 'NOVA', 'TON',
   'NEXUS', 'FORGE', 'ARCH', 'VOLT', 'MOTOR', 'MESH',
-  'INFRA', 'PLAT', 'XAAS', 'BRAIN', 'GENESIS', 'NATURA', 'MAESTRO', 'LINDY',
+  'INFRA', 'PLAT', 'XAAS', 'BRAIN', 'GENESIS', 'NATURA', 'MAESTRO', 'LINDY', 'EVE',
+  'AXIOM', 'MORTEX', 'SENTINEL',
 ]);
 
 export interface AgentCommand {

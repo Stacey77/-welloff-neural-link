@@ -3,6 +3,8 @@ import { callAnthropic, callOpenAiCompat, listRemoteModels, ProviderError, type 
 import { getSettings, saveDiscovered, type Assignable, type Policy } from './settings.js';
 import { recordTokenUsage } from '../observability/metrics.js';
 import { traced } from '../integrations/langsmith.js';
+import { GuardrailError, checkActor, coaching, guardOutput, guardText } from '../security/guardrails.js';
+import { capture } from '../security/governance.js';
 
 export type { ChatMessage, ToolSpec, ToolCall, ToolResult } from './adapters.js';
 
@@ -151,17 +153,52 @@ async function callOnce(spec: string, req: ChatRequest) {
   return p.kind === 'anthropic' ? callAnthropic(spec, model, req) : callOpenAiCompat(p, model, req);
 }
 
+function guardRequest(req: ChatRequest, ctx: { agent: string; spec: string; local: boolean }): ChatRequest {
+  const messages = req.messages.map((m): ChatMessage => {
+    if (m.role === 'user') {
+      const o = guardText(m.content, 'user', ctx);
+      if (o.blocked) throw new GuardrailError(o.blocked);
+      return { role: 'user', content: o.text };
+    }
+    if (m.role === 'tool') {
+      return {
+        role: 'tool',
+        results: m.results.map((r) => {
+          const o = guardText(r.content, 'tool', ctx, r.name);
+          return { ...r, content: o.blocked ? `[Withheld by security policy. ${o.blocked}]` : o.text };
+        }),
+      };
+    }
+    return m;
+  });
+  return { ...req, messages };
+}
+
+function lastInput(req: ChatRequest): string {
+  const m = req.messages[req.messages.length - 1];
+  if (!m) return '';
+  if (m.role === 'user') return m.content;
+  if (m.role === 'tool') return m.results.map((r) => `[${r.name}] ${r.content}`).join('\n');
+  return m.text;
+}
+
 export async function chat(chain: string[], req: ChatRequest, meta: { agent?: string } = {}): Promise<ChatResult> {
   const attempts: Attempt[] = [];
+  const agent = meta.agent ?? 'anonymous';
+  checkActor(agent);
   for (const spec of chain) {
     const started = Date.now();
     try {
       const { provider, model } = splitSpec(spec);
-      const r = await traced(spec, 'llm', { messages: traceMessages(req) }, () => callOnce(spec, req), {
+      const ctx = { agent, spec, local: Boolean(getProvider(provider)?.local) };
+      const safeReq = guardRequest(req, ctx);
+      const r = await traced(spec, 'llm', { messages: traceMessages(safeReq) }, () => callOnce(spec, safeReq), {
         metadata: { ls_provider: provider, ls_model_name: model, agent: meta.agent, tools: req.tools?.map((t) => t.name) },
         outputs: (x) => ({ text: x.text, tool_calls: x.toolCalls, stop: x.stop, usage_metadata: { input_tokens: x.usage.input, output_tokens: x.usage.output, total_tokens: x.usage.input + x.usage.output } }),
       });
       if (r.stop === 'refusal') throw new ProviderError(`${spec} declined the request`);
+      guardOutput(r.text, ctx);
+      capture('llm_call', agent, `${agent} → ${spec}`, `INPUT:\n${lastInput(safeReq).slice(0, 4_000)}\n\nOUTPUT:\n${(r.text || r.toolCalls.map((c) => `tool_call ${c.name}`).join(', ')).slice(0, 4_000)}`, { spec, usage: r.usage });
       const latencyMs = Date.now() - started;
       attempts.push({ spec, ok: true, latencyMs });
       const s = stat(spec);
@@ -174,7 +211,7 @@ export async function chat(chain: string[], req: ChatRequest, meta: { agent?: st
         assistant: { role: 'assistant', text: r.text, toolCalls: r.toolCalls, raw: { spec, content: r.raw } },
       };
     } catch (err) {
-      if ((err as Error)?.name === 'AbortError' || req.signal?.aborted) throw err;
+      if ((err as Error)?.name === 'AbortError' || req.signal?.aborted || err instanceof GuardrailError) throw err;
       const msg = err instanceof Error ? err.message : String(err);
       attempts.push({ spec, ok: false, error: msg, latencyMs: Date.now() - started });
       const s = stat(spec); s.failures++; s.lastError = msg;
@@ -209,10 +246,14 @@ export class LlmSession {
       this.decision = resolveFor(agent, hint);
     }
     this.chain = this.decision.chain;
+    this.coach = coaching(agent);
   }
 
+  private readonly coach: string | null;
+
   async turn(req: ChatRequest): Promise<ChatResult> {
-    const r = await chat(this.chain, req, { agent: this.agent });
+    const system = this.coach ? `${req.system ? `${req.system}\n\n` : ''}${this.coach}` : req.system;
+    const r = await chat(this.chain, { ...req, system }, { agent: this.agent });
     this.used.add(r.spec);
     this.chain = [r.spec, ...this.chain.filter((s) => s !== r.spec)];
     return r;

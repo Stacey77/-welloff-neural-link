@@ -23,12 +23,14 @@ import { initDeployments } from './ide/deploy.js';
 import { wrapPage } from './ide/static-site.js';
 import { gatewayRouter } from './integrations/openai-gateway.js';
 import { lindyRouter } from './integrations/lindy.js';
+import { startThreatResponse } from './security/threat.js';
+import { assistantWebhookRouter, startWatch } from './assistant/index.js';
 
 const PORT = parseInt(process.env.PORT ?? '3001', 10);
 const AGENTS = [
   'ARIA', 'DEVX', 'TERRA', 'CAPITA', 'NOVA', 'TON',
   'NEXUS', 'FORGE', 'ARCH', 'VOLT', 'MOTOR', 'MESH',
-  'INFRA', 'PLAT', 'XAAS', 'BRAIN', 'GENESIS', 'NATURA', 'MAESTRO', 'LINDY',
+  'INFRA', 'PLAT', 'XAAS', 'BRAIN', 'GENESIS', 'NATURA', 'MAESTRO', 'LINDY', 'EVE', 'AXIOM', 'MORTEX', 'SENTINEL',
 ] as const;
 
 const app = express();
@@ -193,6 +195,7 @@ app.use('/mcp', mcpRouter);
 app.use('/ide/api', ideRouter);
 app.use('/v1', gatewayRouter);
 app.use('/integrations/lindy', lindyRouter);
+app.use('/assistant', assistantWebhookRouter);
 function sendPage(file: string) {
   return (_req: express.Request, res: express.Response) => {
     res.type('html').send(wrapPage(readFileSync(join(__dirname, '..', file), 'utf8')));
@@ -212,6 +215,8 @@ server.listen(PORT, () => {
   console.log(`Agents: ${AGENTS.join(', ')}`);
   if (!isDeployment) {
     initDeployments();
+    startThreatResponse();
+    startWatch();
     console.log(`IDE: http://localhost:${PORT}`);
   }
 });

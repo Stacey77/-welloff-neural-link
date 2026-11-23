@@ -6,6 +6,9 @@ import { describe, discover, route as routeLlm, compare, council } from '../llm/
 import { updateSettings } from '../llm/settings.js';
 import { langsmithStatus, traced } from '../integrations/langsmith.js';
 import { lindyStatus, trigger as triggerLindy } from '../integrations/lindy.js';
+import { securityRouter } from '../security/routes.js';
+import { assistantRouter } from '../assistant/index.js';
+import { engineeringRouter } from '../engineering/index.js';
 import { createTask, listTasks, getTask, cancelTask, resolveEdit, deleteTask } from './tasks.js';
 import {
   createDeployment, listDeployments, getDeployment, promote, restart, stop, remove, providerStatus, productionUrl,
@@ -52,6 +55,9 @@ const h = (fn: Handler) => async (req: Request, res: Response) => {
 
 export const ideRouter = Router();
 ideRouter.use(guard);
+ideRouter.use('/security', securityRouter);
+ideRouter.use('/assistant', assistantRouter);
+ideRouter.use('/engineering', engineeringRouter);
 
 ideRouter.get('/fs/tree', h(() => ({ root: 'src', tree: listTree() })));
 ideRouter.get('/fs/file', h((req) => ({ path: req.query.path, content: readSrc(String(req.query.path ?? '')) })));

@@ -3,6 +3,10 @@ import { randomUUID, timingSafeEqual } from 'crypto';
 import { envValue } from '../llm/catalog.js';
 import { route } from '../core/router.js';
 import { AgentIdSchema } from '../types/index.js';
+import { scan, redact } from '../security/detectors.js';
+import { emit } from '../security/events.js';
+import { capture } from '../security/governance.js';
+import { getPolicy } from '../security/guardrails.js';
 
 // Outbound: LINDY_WEBHOOK_URL is the URL of a Lindy agent's "Webhook received" trigger.
 // Inbound: Lindy's HTTP Request action calls POST /integrations/lindy with LINDY_INBOUND_SECRET.
@@ -19,10 +23,21 @@ export async function trigger(payload: Record<string, unknown>): Promise<{ statu
   const url = envValue('LINDY_WEBHOOK_URL');
   if (!url) throw new Error('Add LINDY_WEBHOOK_URL (the URL of your Lindy agent\'s webhook trigger) under Environment.');
   const secret = envValue('LINDY_WEBHOOK_SECRET');
+  let outBody = JSON.stringify({ source: 'neural-link', ...payload });
+  const leaks = getPolicy().secret === 'off' ? [] : scan(outBody, ['secret']);
+  if (leaks.length) {
+    if (getPolicy().secret === 'block') {
+      emit({ kind: 'secret', severity: 'critical', actor: 'LINDY', source: 'outbound webhook', summary: `Blocked a Lindy webhook containing ${leaks.length} secret(s)`, action: 'blocked' });
+      throw new Error('Blocked by data protection policy: the Lindy payload contains secrets.');
+    }
+    if (getPolicy().secret === 'redact') outBody = redact(outBody, leaks);
+    emit({ kind: 'secret', severity: 'high', actor: 'LINDY', source: 'outbound webhook', summary: `${getPolicy().secret === 'redact' ? 'Redacted' : 'Detected'} ${leaks.length} secret(s) in a Lindy webhook`, action: getPolicy().secret === 'redact' ? 'redacted' : 'logged' });
+  }
+  capture('lindy_out', 'LINDY', 'Webhook to Lindy', outBody.slice(0, 8_000));
   const r = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...(secret ? { Authorization: `Bearer ${secret}` } : {}) },
-    body: JSON.stringify({ source: 'neural-link', ...payload }),
+    body: outBody,
     signal: AbortSignal.timeout(20_000),
   });
   const text = await r.text();
@@ -53,6 +68,7 @@ lindyRouter.post('/', async (req: Request, res: Response) => {
     return;
   }
   const body = (req.body ?? {}) as Record<string, unknown>;
+  capture('lindy_in', 'lindy', 'Inbound call from Lindy', JSON.stringify(body).slice(0, 8_000));
   try {
     const agentId = body.agentId ? AgentIdSchema.parse(String(body.agentId).toUpperCase()) : 'TON';
     const command = String(body.command ?? 'dispatch');

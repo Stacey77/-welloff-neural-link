@@ -1,5 +1,6 @@
 import type { AgentCommand, AgentId } from '../types/index.js';
-import { listMcpTools, callMcpTool } from '../connectors/mcp-client.js';
+import { callMcpTool } from '../connectors/mcp-client.js';
+import { platformTools, handlesTool, runPlatformTool } from '../tools/access.js';
 import { a2aBus } from '../a2a/bus.js';
 import { LlmSession, type ChatMessage, type ToolSpec } from '../llm/index.js';
 import { appendMemory, searchMemory, loadMemory } from '../memory/store.js';
@@ -145,15 +146,7 @@ export async function handle(command: AgentCommand): Promise<unknown> {
   const userMessage =
     typeof command.params?.message === 'string' ? command.params.message : command.command;
 
-  const mcpTools = await listMcpTools().catch(() => []);
-  const allTools: ToolSpec[] = [
-    ...BRAIN_TOOLS,
-    ...mcpTools.map((t) => ({
-      name: t.name,
-      description: t.description,
-      input_schema: (t.inputSchema as Record<string, unknown>) ?? { type: 'object', properties: {} },
-    })),
-  ];
+  const allTools: ToolSpec[] = [...BRAIN_TOOLS, ...(await platformTools().catch(() => []))];
 
   const messages: ChatMessage[] = MEMORY.slice(-MAX_MEMORY).map((m): ChatMessage =>
     m.role === 'user' ? { role: 'user', content: m.content } : { role: 'assistant', text: m.content, toolCalls: [] },
@@ -176,7 +169,7 @@ export async function handle(command: AgentCommand): Promise<unknown> {
     const results = await Promise.all(
       r.toolCalls.map(async (call) => {
         try {
-          return { id: call.id, name: call.name, content: JSON.stringify(await executeTool(call.name, call.input)) };
+          return { id: call.id, name: call.name, content: JSON.stringify(handlesTool(call.name) ? await runPlatformTool(call.name, call.input, 'BRAIN') : await executeTool(call.name, call.input)) };
         } catch (err) {
           return { id: call.id, name: call.name, content: err instanceof Error ? err.message : String(err), isError: true };
         }
