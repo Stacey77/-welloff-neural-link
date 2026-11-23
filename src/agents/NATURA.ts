@@ -1,10 +1,6 @@
-import Anthropic from '@anthropic-ai/sdk';
-import type { MessageParam } from '@anthropic-ai/sdk/resources/messages.js';
 import type { AgentCommand } from '../types/index.js';
 import { callMcpTool } from '../connectors/mcp-client.js';
-import { recordTokenUsage } from '../observability/metrics.js';
-
-const claude = new Anthropic();
+import { ask } from '../llm/index.js';
 
 const SYSTEM = `You are NATURA, the Natural Sciences Intelligence agent for the WellOff platform.
 
@@ -56,43 +52,20 @@ export async function handle(command: AgentCommand): Promise<unknown> {
       };
 
       const prompt = commandPrompts[command.command] ?? message;
-      const messages: MessageParam[] = [{ role: 'user', content: prompt }];
-
-      const response = await claude.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 2048,
-        system: SYSTEM,
-        messages,
-      });
-
-      recordTokenUsage('NATURA', response.usage);
-
-      const text = response.content.find(b => b.type === 'text');
+      const r = await answer(prompt, p);
       return {
         agent: 'NATURA',
         command: command.command,
-        analysis: text?.type === 'text' ? text.text : 'Analysis complete',
+        model: r.spec,
+        analysis: r.text || 'Analysis complete',
         domain: inferDomain(command.command),
       };
     }
 
     case 'reason':
     case 'query': {
-      const messages: MessageParam[] = [{ role: 'user', content: message }];
-      const response = await claude.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 2048,
-        system: SYSTEM,
-        messages,
-      });
-
-      recordTokenUsage('NATURA', response.usage);
-
-      const text = response.content.find(b => b.type === 'text');
-      return {
-        agent: 'NATURA',
-        response: text?.type === 'text' ? text.text : 'Query processed',
-      };
+      const r = await answer(message, p);
+      return { agent: 'NATURA', model: r.spec, response: r.text || 'Query processed' };
     }
 
     case 'callMcpTool': {
@@ -103,15 +76,8 @@ export async function handle(command: AgentCommand): Promise<unknown> {
     default:
       // Natural language fallback — answer any nature/science question
       if (message && message !== command.command) {
-        const response = await claude.messages.create({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 2048,
-          system: SYSTEM,
-          messages: [{ role: 'user', content: message }],
-        });
-        recordTokenUsage('NATURA', response.usage);
-        const text = response.content.find(b => b.type === 'text');
-        return { agent: 'NATURA', response: text?.type === 'text' ? text.text : 'Processed' };
+        const r = await answer(message, p);
+        return { agent: 'NATURA', model: r.spec, response: r.text || 'Processed' };
       }
       throw new Error(`NATURA: unknown command "${command.command}"`);
   }
@@ -126,4 +92,8 @@ function inferDomain(cmd: string): string {
   if (cmd.includes('Conservation')) return 'Conservation Biology';
   if (cmd.includes('Literature')) return 'Scientific Research';
   return 'Natural Sciences';
+}
+
+function answer(prompt: string, p: Record<string, unknown>) {
+  return ask('NATURA', prompt, { system: SYSTEM, maxTokens: 4_000, model: typeof p.model === 'string' ? p.model : undefined });
 }
