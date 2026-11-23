@@ -2,7 +2,8 @@ import { randomBytes, randomUUID } from 'crypto';
 import { join } from 'path';
 import { route } from '../core/router.js';
 import { AgentIdSchema } from '../types/index.js';
-import { LlmSession, type ChatMessage, type ToolSpec, type ToolResult } from '../llm/index.js';
+import { LlmSession, type ChatMessage, type ToolSpec } from '../llm/index.js';
+import { runLoop } from '../harness/loop.js';
 import { trigger as triggerLindy } from '../integrations/lindy.js';
 import { traced } from '../integrations/langsmith.js';
 import { getPolicy, restore, toolAllowed } from '../security/guardrails.js';
@@ -36,6 +37,7 @@ export interface IdeTask {
   status: TaskStatus;
   model: string;
   routedTo?: string;
+  runId?: string;
   routeReason?: string;
   modelsUsed?: string[];
   createdAt: number;
@@ -50,7 +52,6 @@ export interface IdeTask {
 
 const TASKS_FILE = join(DATA_DIR, 'ide-tasks.json');
 const MAX_TASKS = 60;
-const MAX_ITER = 18;
 
 const tasks: IdeTask[] = readJson<IdeTask[]>(TASKS_FILE, []).map((t) =>
   t.status === 'running' ? { ...t, status: 'error', error: 'Interrupted by a server restart' } : t,
@@ -190,38 +191,32 @@ async function execute(t: IdeTask): Promise<void> {
     t.routeReason = session.decision.reason;
     t.routedTo = session.decision.spec;
     touch(t);
-    for (let i = 0; i < MAX_ITER; i++) {
-      if (ctrl.signal.aborted) throw new Error('Cancelled');
-      const res = await session.turn({ system: SYSTEM, tools: [...TOOLS, ...META_TOOLS, ...(getPolicy().codeExecution ? [RUN_CODE_TOOL] : [])], messages, maxTokens: 16_000, signal: ctrl.signal });
-      for (const a of res.attempts.filter((x) => !x.ok)) step(t, { kind: 'error', text: `Fell back from ${a.spec}`, detail: a.error });
-      t.routedTo = res.spec;
-      t.modelsUsed = [...session.used];
-      t.tokens.input += res.usage.input;
-      t.tokens.output += res.usage.output;
-      if (res.stop !== 'tool_use' || !res.toolCalls.length) {
-        t.summary = res.text || 'Finished.';
-        break;
-      }
-      if (res.text) step(t, { kind: 'thought', text: short(res.text, 400) });
-      messages.push(res.assistant);
-      const results: ToolResult[] = [];
-      for (const call of res.toolCalls) {
-        const input = call.input;
-        const label = call.name === 'read_file' || call.name === 'propose_edit' ? `${call.name} ${String(input.path ?? '')}`
-          : call.name === 'dispatch_agent' ? `dispatch_agent ${String(input.agentId ?? '')}.${String(input.command ?? '')}` : call.name;
-        try {
-          const out = await traced(call.name, 'tool', input, () => runTool(t, call.name, input), { outputs: (o) => ({ output: o }) });
-          if (call.name !== 'update_plan') step(t, { kind: 'tool', tool: call.name, text: label, detail: short(out, 240) });
-          results.push({ id: call.id, name: call.name, content: out });
-        } catch (err) {
-          const msg = err instanceof Error ? err.message : String(err);
-          step(t, { kind: 'error', tool: call.name, text: `${label} failed`, detail: msg });
-          results.push({ id: call.id, name: call.name, content: msg, isError: true });
-        }
-      }
-      messages.push({ role: 'tool', results });
-      if (i === MAX_ITER - 1) t.summary = res.text || `Stopped after ${MAX_ITER} steps.`;
-    }
+    const label = (name: string, input: Record<string, unknown>) => (name === 'read_file' || name === 'propose_edit' ? `${name} ${String(input.path ?? '')}`
+      : name === 'dispatch_agent' ? `dispatch_agent ${String(input.agentId ?? '')}.${String(input.command ?? '')}` : name);
+    const r = await runLoop({
+      agent: 'IDE', session, system: SYSTEM, messages, maxTokens: 16_000, signal: ctrl.signal, task: messages[0].role === 'user' ? messages[0].content : t.prompt,
+      tools: [...TOOLS, ...META_TOOLS, ...(getPolicy().codeExecution ? [RUN_CODE_TOOL] : [])],
+      execute: (call) => traced(call.name, 'tool', call.input, () => runTool(t, call.name, call.input), { outputs: (o) => ({ output: o }) }),
+      hooks: {
+        onModel: (res) => {
+          for (const a of res.attempts.filter((x) => !x.ok)) step(t, { kind: 'error', text: `Fell back from ${a.spec}`, detail: a.error });
+          t.routedTo = res.spec;
+          t.modelsUsed = [...session.used];
+          t.tokens.input += res.usage.input;
+          t.tokens.output += res.usage.output;
+          if (res.text && res.stop === 'tool_use') step(t, { kind: 'thought', text: short(res.text, 400) });
+        },
+        onToolEnd: (call, out, ok) => {
+          if (ok && call.name !== 'update_plan') step(t, { kind: 'tool', tool: call.name, text: label(call.name, call.input), detail: short(out, 240) });
+          if (!ok) step(t, { kind: 'error', tool: call.name, text: `${label(call.name, call.input)} failed`, detail: out });
+        },
+        onCompact: (summary) => step(t, { kind: 'thought', text: 'Context compacted to stay within budget', detail: short(summary, 240) }),
+      },
+    });
+    t.runId = r.runId;
+    if (r.stop === 'cancelled') throw new Error('Cancelled');
+    t.summary = r.text || 'Finished.';
+    if (r.stop !== 'end') step(t, { kind: 'error', text: `Harness stopped the run: ${r.stop.replace('_', ' ')}` });
     if (t.autoApply) {
       for (const a of t.artifacts) {
         if (a.kind !== 'edit' || a.state !== 'pending') continue;

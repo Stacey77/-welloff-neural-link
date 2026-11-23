@@ -1,6 +1,7 @@
 import type { AgentCommand } from '../types/index.js';
 import { platformTools, runPlatformTool } from '../tools/access.js';
-import { LlmSession, type ChatMessage, type ToolSpec } from '../llm/index.js';
+import { LlmSession, type ToolSpec } from '../llm/index.js';
+import { runLoop } from '../harness/loop.js';
 
 export const SYSTEM = `You are TON (Total Operations Navigator), the master orchestrator AI for the WellOff universal agent platform.
 You coordinate 21 specialized agents by calling their MCP tools directly:
@@ -51,26 +52,10 @@ export async function handle(command: AgentCommand): Promise<unknown> {
   const tools: ToolSpec[] = await platformTools();
 
   const session = new LlmSession('TON', userMessage, typeof command.params?.model === 'string' ? command.params.model : undefined);
-  const messages: ChatMessage[] = [{ role: 'user', content: userMessage }];
-  const MAX_ITERATIONS = 8;
-
-  for (let i = 1; i <= MAX_ITERATIONS; i++) {
-    const r = await session.turn({ system: SYSTEM, tools, messages, maxTokens: 8_000 });
-    if (r.stop !== 'tool_use' || !r.toolCalls.length) {
-      return { orchestratedBy: 'TON', summary: r.text || 'Done', model: r.spec, models: [...session.used], route: session.decision.reason, iterations: i };
-    }
-    messages.push(r.assistant);
-    const results = await Promise.all(
-      r.toolCalls.map(async (call) => {
-        try {
-          return { id: call.id, name: call.name, content: JSON.stringify(await runPlatformTool(call.name, call.input, 'TON')) };
-        } catch (err) {
-          return { id: call.id, name: call.name, content: err instanceof Error ? err.message : String(err), isError: true };
-        }
-      }),
-    );
-    messages.push({ role: 'tool', results });
-  }
-
-  return { orchestratedBy: 'TON', summary: 'Orchestration stopped after the step limit', models: [...session.used], iterations: MAX_ITERATIONS };
+  const r = await runLoop({
+    agent: 'TON', session, system: SYSTEM, tools, maxTokens: 8_000,
+    messages: [{ role: 'user', content: userMessage }],
+    execute: async (call) => JSON.stringify(await runPlatformTool(call.name, call.input, 'TON')),
+  });
+  return { orchestratedBy: 'TON', summary: r.text || 'Done', model: r.models[r.models.length - 1], models: r.models, route: session.decision.reason, iterations: r.steps, stop: r.stop, runId: r.runId };
 }

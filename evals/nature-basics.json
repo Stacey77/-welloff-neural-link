@@ -1,0 +1,15 @@
+{
+  "name": "nature-basics",
+  "description": "NATURA answers common nature questions accurately and with scientific names.",
+  "target": { "type": "agent", "agentId": "NATURA", "command": "query" },
+  "cases": [
+    { "id": "monarch-navigation", "input": "How do monarch butterflies navigate during migration?", "checks": [
+      { "type": "regex", "value": "sun|solar" },
+      { "type": "judge", "rubric": "Mentions a sun compass corrected by an internal (circadian) clock; does not claim they follow roads or scent trails." } ] },
+    { "id": "bee-scientific-name", "input": "What is the scientific name of the western honey bee?", "checks": [
+      { "type": "contains", "value": "Apis mellifera" } ] },
+    { "id": "clay-soil", "input": "My garden soil is heavy clay. Name two ways to improve its drainage.", "checks": [
+      { "type": "regex", "value": "organic matter|compost" },
+      { "type": "judge", "rubric": "Gives at least two sound methods (e.g. adding compost/organic matter, raised beds, cover crops, gypsum where sodic) and does not recommend adding sand in small amounts as the main fix." } ] }
+  ]
+}

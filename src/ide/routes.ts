@@ -9,6 +9,7 @@ import { lindyStatus, trigger as triggerLindy } from '../integrations/lindy.js';
 import { securityRouter } from '../security/routes.js';
 import { assistantRouter } from '../assistant/index.js';
 import { engineeringRouter } from '../engineering/index.js';
+import { harnessRouter } from '../harness/routes.js';
 import { createTask, listTasks, getTask, cancelTask, resolveEdit, deleteTask } from './tasks.js';
 import {
   createDeployment, listDeployments, getDeployment, promote, restart, stop, remove, providerStatus, productionUrl,
@@ -58,6 +59,7 @@ ideRouter.use(guard);
 ideRouter.use('/security', securityRouter);
 ideRouter.use('/assistant', assistantRouter);
 ideRouter.use('/engineering', engineeringRouter);
+ideRouter.use('/harness', harnessRouter);
 
 ideRouter.get('/fs/tree', h(() => ({ root: 'src', tree: listTree() })));
 ideRouter.get('/fs/file', h((req) => ({ path: req.query.path, content: readSrc(String(req.query.path ?? '')) })));

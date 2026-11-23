@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { platformTools, runPlatformTool } from '../tools/access.js';
-import { LlmSession, type ChatMessage, type ToolSpec } from '../llm/index.js';
+import { LlmSession, type ToolSpec } from '../llm/index.js';
+import { runLoop } from '../harness/loop.js';
 import { SYSTEM } from '../agents/TON.js';
 
 export async function streamTon(req: Request, res: Response): Promise<void> {
@@ -21,37 +22,24 @@ export async function streamTon(req: Request, res: Response): Promise<void> {
     const tools: ToolSpec[] = await platformTools();
     const session = new LlmSession('TON', message, typeof req.query.model === 'string' ? req.query.model : undefined);
     send({ type: 'route', model: session.decision.spec, reason: session.decision.reason });
-    const messages: ChatMessage[] = [{ role: 'user', content: message }];
-
-    for (let i = 0; i < 6; i++) {
-      send({ type: 'thinking', iteration: i });
-      const r = await session.turn({ system: SYSTEM, tools, messages, maxTokens: 8_000 });
-      for (const a of r.attempts.filter((x) => !x.ok)) send({ type: 'fallback', from: a.spec, error: a.error });
-      if (r.text) send({ type: 'token', text: r.text, model: r.spec });
-      if (r.stop !== 'tool_use' || !r.toolCalls.length) {
-        send({ type: 'done', summary: r.text, model: r.spec });
-        res.end();
-        return;
-      }
-      send({ type: 'tools_start', count: r.toolCalls.length });
-      messages.push(r.assistant);
-      const results = await Promise.all(
-        r.toolCalls.map(async (call) => {
-          send({ type: 'tool_use', name: call.name });
-          try {
-            const out = JSON.stringify(await runPlatformTool(call.name, call.input, 'TON'));
-            send({ type: 'tool_result', name: call.name, preview: out.slice(0, 120) });
-            return { id: call.id, name: call.name, content: out };
-          } catch (err) {
-            const msg = err instanceof Error ? err.message : String(err);
-            send({ type: 'tool_result', name: call.name, preview: msg.slice(0, 120) });
-            return { id: call.id, name: call.name, content: msg, isError: true };
-          }
-        }),
-      );
-      messages.push({ role: 'tool', results });
-    }
-    send({ type: 'done', summary: 'Orchestration stopped after the step limit' });
+    let lastText = '';
+    const r = await runLoop({
+      agent: 'TON', session, system: SYSTEM, tools, maxTokens: 8_000,
+      messages: [{ role: 'user', content: message }],
+      execute: async (call) => JSON.stringify(await runPlatformTool(call.name, call.input, 'TON')),
+      hooks: {
+        onModel: (res, step) => {
+          send({ type: 'thinking', iteration: step - 1 });
+          for (const a of res.attempts.filter((x) => !x.ok)) send({ type: 'fallback', from: a.spec, error: a.error });
+          if (res.text) { send({ type: 'token', text: res.text, model: res.spec }); lastText = res.text; }
+          if (res.toolCalls.length) send({ type: 'tools_start', count: res.toolCalls.length });
+        },
+        onToolStart: (call) => send({ type: 'tool_use', name: call.name }),
+        onToolEnd: (call, out) => send({ type: 'tool_result', name: call.name, preview: out.slice(0, 120) }),
+        onCompact: () => send({ type: 'compacted' }),
+      },
+    });
+    send({ type: 'done', summary: r.text || lastText, model: r.models[r.models.length - 1], stop: r.stop, runId: r.runId });
     res.end();
   } catch (e) {
     send({ type: 'error', message: e instanceof Error ? e.message : String(e) });

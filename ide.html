@@ -588,6 +588,7 @@ div.CodeMirror-cursors { visibility: hidden; position: relative; z-index: 3; }
       <button type="button" data-surface="manager" aria-pressed="false" title="Agent Manager (Ctrl+E toggles)">Agent Manager <span class="n" id="review-count" hidden>0</span></button>
       <button type="button" data-surface="deploy" aria-pressed="false" title="Deployments">Deployments</button>
       <button type="button" data-surface="models" aria-pressed="false" title="Models, agents and integrations">Models</button>
+      <button type="button" data-surface="harness" aria-pressed="false" title="Harness, context and evals">Harness</button>
       <button type="button" data-surface="engineering" aria-pressed="false" title="Engineering orchestration">Engineering</button>
       <button type="button" data-surface="security" aria-pressed="false" title="Security">Security <span class="n" id="sec-count" hidden>0</span></button>
       <button type="button" data-surface="eve" aria-pressed="false" title="EVE assistant">EVE <span class="n" id="eve-count" hidden>0</span></button>
@@ -725,6 +726,16 @@ div.CodeMirror-cursors { visibility: hidden; position: relative; z-index: 3; }
           <div class="list" id="eve-mem"></div></section>
         <section><h3>Watchers</h3><div id="eve-watch"></div></section>
       </aside>
+    </section>
+
+    <!-- Harness surface -->
+    <section class="surface s-sec" id="s-harness" data-surface="harness" hidden>
+      <nav class="subnav" id="har-nav" aria-label="Harness sections">
+        <button type="button" data-hv="context" aria-pressed="true">Context inspector</button>
+        <button type="button" data-hv="config" aria-pressed="false">Agent harness</button>
+        <button type="button" data-hv="evals" aria-pressed="false">Evals</button>
+      </nav>
+      <div class="sec-body" id="har-body"></div>
     </section>
 
     <!-- Engineering surface -->
@@ -1230,6 +1241,7 @@ function setSurface(name) {
   if (name === 'security') renderSecurity();
   if (name === 'eve') loadEve();
   if (name === 'engineering') loadEngineering();
+  if (name === 'harness') renderHarness();
 }
 $$('.titlebar [data-surface]').forEach((b) => b.addEventListener('click', () => setSurface(b.dataset.surface)));
 
@@ -2316,6 +2328,124 @@ $('#eng-body').addEventListener('click', async (e) => {
 });
 setInterval(() => { if (S.live) refreshSecBadges(); }, 30_000);
 
+/* ── Harness and context engineering ── */
+const HAR = '/ide/api/harness';
+S.har = { view: 'context', run: null, evalRun: null, evalPicks: null, poll: null };
+const FIELDS = [
+  ['maxSteps', 'Max steps', 'Model turns before the run stops'],
+  ['maxTokens', 'Token budget', 'Input + output tokens per run'],
+  ['maxCostUsd', 'Cost budget ($)', 'Stops when known-price spend reaches this'],
+  ['toolTimeoutMs', 'Tool timeout (ms)', 'A tool call that takes longer fails'],
+  ['loopLimit', 'Repeat limit', 'Identical tool calls allowed before the agent is told to change approach'],
+  ['contextBudgetTokens', 'Context budget', 'Estimated tokens the prompt may grow to'],
+  ['compactAt', 'Compact at', 'Fraction of the context budget that triggers compaction (0.3–0.95)'],
+  ['toolResultMaxChars', 'Tool result limit', 'Characters kept from one tool result; the middle is clipped'],
+];
+const SEG = { system: '#7c7ff0', tools: '#c9a6ff', user: '#38c8f0', assistant: '#3fc98a', toolResults: '#e8b04a' };
+function harExample() {
+  const step = (i, sys, tools, u, a, tr, extra = {}) => ({ i, model: 'anthropic:claude-opus-5-5', ms: 1800 + i * 300, input: sys + tools + u + a + tr, output: 400, context: { system: sys, tools, user: u, assistant: a, toolResults: tr, total: sys + tools + u + a + tr }, tools: [{ name: 'search_tools', ok: true, ms: 40, clipped: 0 }, { name: 'call_tool', ok: true, ms: 220, clipped: i === 3 ? 41800 : 0 }], fallbacks: [], ...extra });
+  return {
+    config: { TON: { maxSteps: 8, maxTokens: 200000, maxCostUsd: 1, toolTimeoutMs: 30000, loopLimit: 3, validateToolInputs: true, contextBudgetTokens: 120000, compactAt: 0.8, toolResultMaxChars: 12000 } },
+    report: { runs: 14, steps: 61, compactions: 2, clippedResults: 9, invalidCalls: 3, repeatedCalls: 1, averageContext: { system: 1350, tools: 250, user: 120, assistant: 2100, toolResults: 9400, total: 13220 } },
+    runs: [{ id: 'run_example', agent: 'TON', task: 'Find FSBO leads in Austin and draft follow-ups', stop: 'end', stepCount: 5, startedAt: Date.now() - 600000, endedAt: Date.now() - 560000, compactions: 1, tokens: { input: 98000, output: 2400 }, costUsd: 0.44, lastContext: 21000 }],
+    run: { id: 'run_example', agent: 'TON', task: 'Find FSBO leads in Austin and draft follow-ups', stop: 'end', config: { contextBudgetTokens: 120000, compactAt: 0.8 }, compactions: 1, tokens: { input: 98000, output: 2400 }, costUsd: 0.44,
+      steps: [step(1, 1350, 250, 40, 0, 0), step(2, 1350, 250, 40, 600, 9000), step(3, 1350, 250, 40, 1300, 52000), step(4, 1350, 250, 40, 1900, 96000), step(5, 1350, 250, 2100, 0, 0, { compacted: { before: 99540, after: 3740, model: 'anthropic:claude-haiku-5-5' } })] },
+    evals: { suites: [{ name: 'nature-basics', description: 'NATURA answers common nature questions accurately.', cases: 3, file: 'nature-basics.json' }, { name: 'injection-resistance', description: 'Models summarize untrusted documents without obeying hidden instructions.', cases: 3, file: 'injection-resistance.json' }],
+      runs: [{ id: 'eval_example', suite: 'injection-resistance', status: 'done', startedAt: Date.now() - 900000, models: ['anthropic:claude-opus-5-5', 'openai:gpt-5'], summary: [{ model: 'anthropic:claude-opus-5-5', passRate: 100, score: 100, avgLatencyMs: 3100, costUsd: 0.012 }, { model: 'openai:gpt-5', passRate: 66.7, score: 83.3, avgLatencyMs: 2600, costUsd: 0 }] }] },
+  };
+}
+function harGo(view) { S.har.view = view; renderHarness(); }
+$('#har-nav').addEventListener('click', (e) => { const b = e.target.closest('[data-hv]'); if (b) harGo(b.dataset.hv); });
+async function renderHarness() {
+  $$('#har-nav [data-hv]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.hv === S.har.view)));
+  const body = $('#har-body');
+  const v = S.har.view;
+  try {
+    const html = await ({ context: harContext, config: harConfig, evals: harEvals })[v]();
+    if (S.har.view === v) body.innerHTML = `<div class="pane">${html}</div>`;
+  } catch (err) { body.innerHTML = `<div class="pane"><div class="callout err">${esc(err.message)}</div></div>`; }
+}
+function stack(c, budget) {
+  const total = Math.max(budget || 0, c.total, 1);
+  return `<div style="display:flex;height:12px;border-radius:3px;overflow:hidden;background:var(--ink-3);position:relative">${Object.keys(SEG).map((k) => `<i title="${k}: ${c[k].toLocaleString()} tokens" style="display:block;width:${(c[k] / total) * 100}%;background:${SEG[k]}"></i>`).join('')}</div>`;
+}
+const legend = `<div class="form-row" style="font:11px var(--font-code);color:var(--text-2)">${Object.entries(SEG).map(([k, c]) => `<span><i style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${c};margin-right:5px"></i>${k === 'toolResults' ? 'tool results' : k}</span>`).join('')}</div>`;
+async function harContext() {
+  const ex = S.live ? null : harExample();
+  const rep = ex ? ex.report : await api(HAR + '/context');
+  const runs = ex ? ex.runs : await api(HAR + '/runs');
+  const sel = S.har.run || runs[0]?.id;
+  const run = !sel ? null : ex ? ex.run : await api(`${HAR}/runs/${sel}`).catch(() => null);
+  const a = rep.averageContext;
+  return `${demoNote()}
+    <div><h2>Context engineering</h2><p class="sub">What fills each model call's context window, step by step. Large tool results are clipped, repeated or invalid tool calls are caught, and long runs are compacted into a fresh transcript built from a summary once they pass the agent's context budget. Token counts are estimates (about 4 characters per token).</p></div>
+    <div class="kpis"><div class="kpi"><div class="l">Runs</div><div class="v">${rep.runs}</div></div><div class="kpi"><div class="l">Avg context</div><div class="v">${(a.total / 1000).toFixed(1)}k</div></div><div class="kpi"><div class="l">Compactions</div><div class="v">${rep.compactions}</div></div><div class="kpi"><div class="l">Clipped results</div><div class="v">${rep.clippedResults}</div></div><div class="kpi"><div class="l">Invalid calls caught</div><div class="v">${rep.invalidCalls}</div></div><div class="kpi"><div class="l">Loops caught</div><div class="v">${rep.repeatedCalls}</div></div></div>
+    <div><h3>Average context per call</h3>${stack(a)}${legend}</div>
+    <div class="two"><div><h3>Recent runs</h3><div class="list">${runs.length ? runs.map((r) => `<div class="item click${r.id === sel ? ' sel' : ''}" data-run="${esc(r.id)}"><span class="sev ${r.stop === 'end' ? 'ok' : r.stop ? 'warn' : 'low'}">${esc(r.stop || 'running')}</span><span class="t">${esc(r.agent)} · ${esc(r.task)}</span><span class="x">${r.stepCount} steps · ${((r.tokens.input + r.tokens.output) / 1000).toFixed(1)}k tokens${r.costUsd ? ` · $${r.costUsd.toFixed(3)}` : ''}${r.compactions ? ` · ${r.compactions} compaction(s)` : ''} · ${when(r.startedAt)}</span></div>`).join('') : '<div class="empty" style="padding:0">No agent runs yet. Run TON, BRAIN or an IDE task.</div>'}</div></div>
+    <div>${run ? `<h3>Run ${esc(run.id)} · stop: ${esc(run.stop || 'running')}</h3>${legend}<div class="list" style="margin-top:8px">${run.steps.map((s) => `<div class="pol" style="gap:6px"><div class="form-row"><span class="l" style="font:600 11.5px var(--font-code)">Step ${s.i}</span><span class="h">${esc(s.model)} · ${secs(s.ms)} · ${(s.context.total / 1000).toFixed(1)}k context</span></div>
+      ${s.compacted ? `<span class="sev medium" style="align-self:flex-start">compacted ${(s.compacted.before / 1000).toFixed(1)}k → ${(s.compacted.after / 1000).toFixed(1)}k by ${esc(s.compacted.model)}</span>` : ''}
+      <div style="position:relative">${stack(s.context, run.config.contextBudgetTokens)}<i title="compaction threshold" style="position:absolute;top:-3px;bottom:-3px;left:${run.config.compactAt * 100}%;width:2px;background:var(--err)"></i></div>
+      <div class="chipset">${s.tools.map((t) => `<span class="chip" style="${!t.ok ? 'color:#ffb3b9;border-color:rgba(240,97,109,.35);background:rgba(240,97,109,.08)' : ''}">${esc(t.name)}${t.clipped ? ` · clipped ${(t.clipped / 1000).toFixed(1)}k` : ''}${t.invalid ? ' · invalid input' : ''}${t.repeated ? ` · repeat ×${t.repeated}` : ''}</span>`).join('')}${s.fallbacks.map((f) => `<span class="chip" style="color:var(--warn);border-color:rgba(232,176,74,.35);background:rgba(232,176,74,.08)">fallback</span>`).join('')}</div></div>`).join('')}</div><p class="sub" style="margin-top:6px">Red marker: compaction threshold (${Math.round(run.config.compactAt * 100)}% of ${(run.config.contextBudgetTokens / 1000).toFixed(0)}k).</p>` : ''}</div></div>`;
+}
+async function harConfig() {
+  const cfgs = S.live ? await api(HAR + '/config') : harExample().config;
+  return `${demoNote()}
+    <div><h2>Agent harness</h2><p class="sub">The loop every agent runs in. It limits steps, tokens, cost and tool time, validates tool inputs against their schemas so the model can correct itself, stops repeated identical calls, and applies the context policy. TON, BRAIN, the streaming endpoint and the IDE coding agent all use it.</p></div>
+    ${Object.entries(cfgs).map(([agent, c]) => `<div class="pol" data-har-agent="${esc(agent)}"><div class="form-row"><span class="l" style="font:600 13px var(--font-code)">${esc(agent)}</span><span class="grow"></span><label class="check"><input type="checkbox" data-hf="validateToolInputs"${c.validateToolInputs ? ' checked' : ''}> Validate tool inputs</label><button type="button" class="btn primary" data-har-save="${esc(agent)}">Save</button></div>
+      <div class="pol-grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr))">${FIELDS.map(([k, l, h]) => `<label class="pol" style="gap:4px;padding:8px 10px;background:var(--ink)"><span class="l" style="font-size:12px">${l}</span><input type="number" data-hf="${k}" value="${c[k]}" step="${k === 'compactAt' ? 0.05 : k === 'maxCostUsd' ? 0.1 : 1}" style="background:var(--ink-3);border:1px solid var(--line);border-radius:6px;padding:5px 8px"><span class="h" style="font-size:11px">${h}</span></label>`).join('')}</div></div>`).join('')}`;
+}
+async function harEvals() {
+  const d = S.live ? await api(HAR + '/evals') : harExample().evals;
+  const avail = S.llm?.available ?? [];
+  if (!S.har.evalPicks) S.har.evalPicks = new Set(avail.slice(0, 2));
+  const sel = S.har.evalRun ? (S.live ? await api(`${HAR}/evals/runs/${S.har.evalRun}`).catch(() => null) : null) : null;
+  return `${demoNote()}
+    <div><h2>Evals</h2><p class="sub">Test suites in evals/*.json run the same cases against several models or agents and score them with exact checks (contains, regex, JSON, latency) and an LLM judge for rubric checks. Use them before switching models, changing prompts or tightening the harness.</p></div>
+    <div class="list">${d.suites.map((s) => `<label class="item click"><input type="radio" name="eval-suite" value="${esc(s.name)}"${(S.har.suite ?? d.suites[0]?.name) === s.name ? ' checked' : ''}><span class="t">${esc(s.name)} · ${s.cases} case${s.cases === 1 ? '' : 's'}</span><span class="d">${esc(s.description)}</span><span class="x">evals/${esc(s.file)}</span></label>`).join('') || '<div class="empty" style="padding:0">No suites in evals/.</div>'}</div>
+    <div><h3>Models</h3><div class="pick" id="eval-pick">${avail.map((m) => `<label><input type="checkbox" value="${esc(m)}"${S.har.evalPicks.has(m) ? ' checked' : ''}><span>${esc(m)}</span></label>`).join('') || '<span class="empty" style="padding:0">No models configured. Add a provider key under Models.</span>'}</div></div>
+    <div class="form-row"><label class="check">Judge <select class="sel" id="eval-judge">${modelOptions('auto')}</select></label><span class="grow"></span><button type="button" class="btn primary" data-har-act="run-eval">Run eval</button></div>
+    ${sel ? evalResult(sel) : ''}
+    <div><h3>History</h3><div class="list">${d.runs.map((r) => `<div class="item click" data-eval="${esc(r.id)}"><span class="sev ${r.status === 'done' ? 'ok' : r.status === 'running' ? 'medium' : 'fail'}">${esc(r.status)}</span><span class="t">${esc(r.suite)} · ${when(r.startedAt)}</span><span class="d">${(r.summary || []).map((m) => `${esc(m.model)}: ${m.passRate}% pass`).join(' · ')}</span></div>`).join('') || '<div class="empty" style="padding:0">No eval runs yet.</div>'}</div></div>`;
+}
+function evalResult(r) {
+  if (r.status === 'running') return `<div class="route-out">Running ${esc(r.suite)}: ${r.progress.done} of ${r.progress.total} cases…</div>`;
+  if (r.status === 'error') return `<div class="callout err">${esc(r.error)}</div>`;
+  const caseIds = r.results[0]?.cases.map((c) => c.id) ?? [];
+  return `<div><h3>${esc(r.suite)} · judge ${esc(r.judge || 'auto')}</h3><div class="tbl-wrap"><table class="stats"><thead><tr><th>Model</th><th>Pass rate</th><th>Score</th><th>Avg latency</th><th>Cost</th>${caseIds.map((id) => `<th>${esc(id)}</th>`).join('')}</tr></thead><tbody>${r.results.map((m) => `<tr><td>${esc(m.model)}</td><td style="color:${m.passRate >= 90 ? 'var(--ok)' : m.passRate >= 60 ? 'var(--warn)' : 'var(--err)'}">${m.passRate}%</td><td>${m.score}%</td><td>${secs(m.avgLatencyMs)}</td><td>${m.costUsd ? '$' + m.costUsd.toFixed(4) : '—'}</td>${m.cases.map((c) => `<td title="${esc(c.error || c.checks.map((x) => `${x.pass ? '✓' : '✕'} ${x.detail}`).join('\n'))}" style="color:${c.pass ? 'var(--ok)' : 'var(--err)'}">${c.pass ? 'pass' : c.error ? 'error' : 'fail'}</td>`).join('')}</tr>`).join('')}</tbody></table></div><p class="sub" style="margin-top:6px">Hover a cell to see each check.</p></div>`;
+}
+$('#har-body').addEventListener('click', async (e) => {
+  const run = e.target.closest('[data-run]'); if (run) { S.har.run = run.dataset.run; renderHarness(); return; }
+  const ev = e.target.closest('[data-eval]'); if (ev) { S.har.evalRun = ev.dataset.eval; renderHarness(); return; }
+  const save = e.target.closest('[data-har-save]');
+  if (save) {
+    if (!needLive('Changing the harness')) return;
+    const card = save.closest('[data-har-agent]'); const body = {};
+    card.querySelectorAll('[data-hf]').forEach((i) => { body[i.dataset.hf] = i.type === 'checkbox' ? i.checked : Number(i.value); });
+    try { await api(`${HAR}/config/${save.dataset.harSave}`, { method: 'PUT', body }); toast(`${save.dataset.harSave} harness saved`); } catch (err) { toast(err.message, true); }
+    return;
+  }
+  if (e.target.closest('[data-har-act="run-eval"]')) {
+    if (!needLive('Running evals')) return;
+    const suite = $('input[name="eval-suite"]:checked')?.value;
+    const models = [...$$('#eval-pick input:checked')].map((i) => i.value);
+    const judge = $('#eval-judge').value;
+    try {
+      const r = await api(HAR + '/evals/run', { method: 'POST', body: { suite, models, judge: judge === 'auto' ? undefined : judge } });
+      S.har.evalRun = r.id; S.har.suite = suite; renderHarness();
+      clearInterval(S.har.poll);
+      S.har.poll = setInterval(async () => {
+        const x = await api(`${HAR}/evals/runs/${r.id}`).catch(() => null);
+        if (!x || x.status !== 'running') { clearInterval(S.har.poll); if (x) toast(`Eval ${x.status}: ${x.suite}`); }
+        if (S.surface === 'harness' && S.har.view === 'evals') renderHarness();
+      }, 1500);
+    } catch (err) { toast(err.message, true); }
+  }
+});
+$('#har-body').addEventListener('change', (e) => {
+  if (e.target.name === 'eval-suite') S.har.suite = e.target.value;
+  if (e.target.closest('#eval-pick')) { const c = e.target; c.checked ? S.har.evalPicks.add(c.value) : S.har.evalPicks.delete(c.value); }
+});
+
 /* ── Panel ── */
 function showPanel(name) {
   $('#main').classList.remove('panel-hidden');
@@ -2474,6 +2604,8 @@ function openPalette(mode = 'files') {
     { label: 'Open Security', k: '', run: () => setSurface('security') },
     { label: 'Open EVE assistant', k: '', run: () => setSurface('eve') },
     { label: 'Open Engineering', k: '', run: () => setSurface('engineering') },
+    { label: 'Open Harness and evals', k: '', run: () => setSurface('harness') },
+    { label: 'Inspect agent context', k: '', run: () => { setSurface('harness'); harGo('context'); } },
     { label: 'Analyze an email', k: '', run: () => { setSurface('security'); secGo('email'); } },
     { label: 'Check a domain (DMARC)', k: '', run: () => { setSurface('security'); secGo('dmarc'); } },
     { label: 'Deploy preview (local)', k: '', run: () => deploy('local', 'preview') },

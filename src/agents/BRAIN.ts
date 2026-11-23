@@ -3,6 +3,7 @@ import { callMcpTool } from '../connectors/mcp-client.js';
 import { platformTools, handlesTool, runPlatformTool } from '../tools/access.js';
 import { a2aBus } from '../a2a/bus.js';
 import { LlmSession, type ChatMessage, type ToolSpec } from '../llm/index.js';
+import { runLoop } from '../harness/loop.js';
 import { appendMemory, searchMemory, loadMemory } from '../memory/store.js';
 
 const MEMORY: { role: 'user' | 'assistant'; content: string }[] = [];
@@ -154,29 +155,12 @@ export async function handle(command: AgentCommand): Promise<unknown> {
   messages.push({ role: 'user', content: userMessage });
 
   const session = new LlmSession('BRAIN', userMessage, typeof command.params?.model === 'string' ? command.params.model : undefined);
-  let iterations = 0;
-  const MAX_ITER = 10;
-  let finalText = '';
-
-  while (iterations < MAX_ITER) {
-    iterations++;
-    const r = await session.turn({ system: SYSTEM, tools: allTools, messages, maxTokens: 8_000 });
-    if (r.stop !== 'tool_use' || !r.toolCalls.length) {
-      finalText = r.text || 'Cognitive processing complete.';
-      break;
-    }
-    messages.push(r.assistant);
-    const results = await Promise.all(
-      r.toolCalls.map(async (call) => {
-        try {
-          return { id: call.id, name: call.name, content: JSON.stringify(handlesTool(call.name) ? await runPlatformTool(call.name, call.input, 'BRAIN') : await executeTool(call.name, call.input)) };
-        } catch (err) {
-          return { id: call.id, name: call.name, content: err instanceof Error ? err.message : String(err), isError: true };
-        }
-      }),
-    );
-    messages.push({ role: 'tool', results });
-  }
+  const r = await runLoop({
+    agent: 'BRAIN', session, system: SYSTEM, tools: allTools, messages, maxTokens: 8_000, task: userMessage,
+    execute: async (call) => JSON.stringify(handlesTool(call.name) ? await runPlatformTool(call.name, call.input, 'BRAIN') : await executeTool(call.name, call.input)),
+  });
+  const finalText = r.text || 'Cognitive processing complete.';
+  const iterations = r.steps;
 
   MEMORY.push({ role: 'user', content: userMessage });
   if (finalText) MEMORY.push({ role: 'assistant', content: finalText });
@@ -191,5 +175,7 @@ export async function handle(command: AgentCommand): Promise<unknown> {
     iterations,
     models: [...session.used],
     route: session.decision.reason,
+    stop: r.stop,
+    runId: r.runId,
   };
 }
